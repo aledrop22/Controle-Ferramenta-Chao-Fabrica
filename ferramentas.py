@@ -70,7 +70,7 @@ estoque = {
     ],
     'Súbito': ['6 - 10', '10 - 18', '18 - 35', '35 - 50', '50 - 160'],
     'Relógio Comparador': ['Relógio 1', 'Relógio 2', 'Relógio 3'],
-    'Paquímetro Digital': ['Paquímetro Digital']
+    'Paquímetro': ['Modelo Digital']
 }
 
 # ==========================================
@@ -97,7 +97,7 @@ if st.session_state.tela_atual == 'dashboard':
     with col_em_uso:
         st.markdown("""
             <div style="background-color: #d4edda; padding: 10px; border-radius: 5px; color: #155724; margin-bottom: 15px;">
-                <h4 style="margin:0;">🟢 Ferramentas em Uso</h4>
+                <h4 style="margin:0;">🟢 Ferramentas em Uso (Tempo Real)</h4>
             </div>
         """, unsafe_allow_html=True)
         
