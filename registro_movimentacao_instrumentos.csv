@@ -1,0 +1,8 @@
+﻿ID;Instrumento;Especificacao;Operador;Setor;Maquina;Data_Retirada;Hora_Retirada;Data_Retorno;Hora_Retorno;Status
+20260516131236;Porca Calibradora;M24 x 1,5;Alex;Usinagem;GL 01;16/05/2026;13:12;16/05/2026;13:17;Devolvido
+20260516131406;Porca Calibradora;M8 x 1;Rodrigo;Usinagem;FRESA 01;16/05/2026;13:14;16/05/2026;13:40;Devolvido
+20260516131646;Porca Calibradora;M30 x 1,5;Vinícius;Usinagem;FRESA 01;16/05/2026;13:16;;;Em Uso
+20260516133154;Micrômetro;75 - 100;Lucas;Usinagem;TORNO 01;16/05/2026;13:31;16/05/2026;13:32;Devolvido
+20260516133302;Micrômetro;50 - 75;Pedro Henrique;Usinagem;CNC 01;16/05/2026;13:33;;;Em Uso
+20260516134826;Ferramenta Diversa;Martelo;Lucas;Usinagem;TORNO 03;16/05/2026;13:48;16/05/2026;13:48;Devolvido
+202605161432096;Paquímetro Digital;Paquímetro Digital;Pedro Henrique;Usinagem;CNC 02;16/05/2026;14:32;;;Em Uso
