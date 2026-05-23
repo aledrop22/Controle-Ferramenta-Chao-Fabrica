@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
+import pytz
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
 st.set_page_config(page_title="Controle de Ferramentas - Tempo Real", layout="wide")
 
 ARQUIVO_CSV = 'registro_movimentacao_instrumentos.csv'
+FUSO_HORARIO_BRASIL = pytz.timezone('America/Sao_Paulo')
 
 # --- 1. FUNÇÕES DE BANCO DE DADOS (CSV) ---
 def carregar_dados():
@@ -117,7 +119,7 @@ if st.session_state.tela_atual == 'dashboard':
                         st.markdown(f"📅 Retirado: {row['Data_Retirada']} às {row['Hora_Retirada']}")
                     with c3:
                         if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
-                            agora = datetime.now()
+                            agora = datetime.now(FUSO_HORARIO_BRASIL)
                             st.session_state.df_dados.loc[index, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
                             st.session_state.df_dados.loc[index, 'Hora_Retorno'] = agora.strftime("%H:%M")
                             st.session_state.df_dados.loc[index, 'Status'] = 'Devolvido'
@@ -303,7 +305,7 @@ elif st.session_state.tela_atual == 'retirada':
         elif not st.session_state.ferramentas_selecionadas:
             st.warning("⚠️ Atenção: Por favor, selecione pelo menos uma ferramenta nas abas do Passo 3.")
         else:
-            agora = datetime.now()
+            agora = datetime.now(FUSO_HORARIO_BRASIL)
             for ferramenta in st.session_state.ferramentas_selecionadas:
                 categoria, detalhe = ferramenta.split(" - ", 1)
                 novo_id = agora.strftime('%Y%m%d%H%M%S') + str(len(st.session_state.df_dados))
