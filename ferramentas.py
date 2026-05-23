@@ -122,7 +122,7 @@ if st.session_state.tela_atual == 'dashboard':
                         st.markdown("**Ferramentas:**")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
-                                col_num, col_tool, col_btn = st.columns([1, 4, 1])
+                                col_num, col_tool, col_btn = st.columns([0.5, 5, 1])
                                 with col_num:
                                     st.markdown(f"**{num}**")
                                 with col_tool:
