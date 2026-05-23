@@ -70,7 +70,7 @@ estoque = {
     ],
     'Súbito': ['6 - 10', '10 - 18', '18 - 35', '35 - 50', '50 - 160'],
     'Relógio Comparador': ['Relógio 1', 'Relógio 2', 'Relógio 3'],
-    'Paquímetro': ['Modelo Digital']
+    'Paquímetro Digital': ['Modelo Digital']
 }
 
 # ==========================================
