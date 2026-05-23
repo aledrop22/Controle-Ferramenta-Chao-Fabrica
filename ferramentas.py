@@ -113,25 +113,25 @@ if st.session_state.tela_atual == 'dashboard':
                 with st.container(border=True):
                     foto_op = fotos_operadores.get(operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
                     
-                    c1, c2, c3 = st.columns([1, 4, 1])
+                    c1, c2 = st.columns([1, 4])
                     with c1:
                         st.image(foto_op, width=60)
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}**")
-                        st.markdown(f"� Retirado: {data_retirada} às {hora_retirada}")
+                        st.markdown(f"📅 Retirado: {data_retirada} às {hora_retirada}")
                         st.markdown("**Ferramentas:**")
                         for idx, row in group.iterrows():
-                            st.markdown(f"- {row['Instrumento']} ({row['Especificacao']})")
-                    with c3:
-                        # Individual return buttons for each tool
-                        for idx, row in group.iterrows():
-                            if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
-                                agora = datetime.now(FUSO_HORARIO_BRASIL)
-                                st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
-                                salvar_dados(st.session_state.df_dados)
-                                st.rerun()
+                            col_tool, col_btn = st.columns([4, 1])
+                            with col_tool:
+                                st.markdown(f"- {row['Instrumento']} ({row['Especificacao']})")
+                            with col_btn:
+                                if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
+                                    agora = datetime.now(FUSO_HORARIO_BRASIL)
+                                    st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                    st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                    st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                    salvar_dados(st.session_state.df_dados)
+                                    st.rerun()
         else:
             st.info("Nenhuma ferramenta retirada no momento.")
 
