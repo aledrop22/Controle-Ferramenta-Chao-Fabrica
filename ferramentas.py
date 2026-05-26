@@ -113,7 +113,7 @@ if st.session_state.tela_atual == 'dashboard':
                 with st.container(border=True):
                     foto_op = fotos_operadores.get(operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
                     
-                    c1, c2 = st.columns([1, 4])
+                    c1, c2 = st.columns([0.5, 5])
                     with c1:
                         st.image(foto_op, width=60)
                     with c2:
@@ -122,7 +122,7 @@ if st.session_state.tela_atual == 'dashboard':
                         st.markdown("**Ferramentas:**")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
-                                col_num, col_tool, col_btn = st.columns([0.5, 5, 1])
+                                col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
                                 with col_num:
                                     st.markdown(f"**{num}**")
                                 with col_tool:
