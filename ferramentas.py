@@ -7,6 +7,17 @@ import pytz
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
 st.set_page_config(page_title="Controle de Ferramentas - Tempo Real", layout="wide")
 
+# CSS para responsividade
+st.markdown("""
+<style>
+    @media (max-width: 768px) {
+        .stColumns > div {
+            flex-direction: column !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 ARQUIVO_CSV = 'registro_movimentacao_instrumentos.csv'
 FUSO_HORARIO_BRASIL = pytz.timezone('America/Sao_Paulo')
 
@@ -118,8 +129,7 @@ if st.session_state.tela_atual == 'dashboard':
                         st.image(foto_op, width=60)
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}**")
-                        st.markdown(f"📅 Retirado: {data_retirada} às {hora_retirada}")
-                        st.markdown("**Ferramentas:**")
+                        st.markdown(f"📅 {data_retirada} às {hora_retirada} | **{len(group)} ferramenta(s)**")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
                                 col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
