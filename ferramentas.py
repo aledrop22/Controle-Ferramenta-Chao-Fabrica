@@ -117,10 +117,10 @@ if st.session_state.tela_atual == 'dashboard':
         df_uso = df[df['Status'] == 'Em Uso']
         
         if not df_uso.empty:
-            # Group by user and withdrawal details
-            grouped = df_uso.groupby(['Operador', 'Setor', 'Maquina', 'Data_Retirada', 'Hora_Retirada'])
+            # Group by user only (regardless of date and time)
+            grouped = df_uso.groupby(['Operador', 'Setor', 'Maquina'])
             
-            for (operador, setor, maquina, data_retirada, hora_retirada), group in grouped:
+            for (operador, setor, maquina), group in grouped:
                 with st.container(border=True):
                     foto_op = fotos_operadores.get(operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
                     
@@ -129,7 +129,7 @@ if st.session_state.tela_atual == 'dashboard':
                         st.image(foto_op, width=60)
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}**")
-                        st.markdown(f"📅 {data_retirada} às {hora_retirada} | **{len(group)} ferramenta(s)**")
+                        st.markdown(f"**{len(group)} ferramenta(s)**")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
                                 col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
@@ -137,6 +137,7 @@ if st.session_state.tela_atual == 'dashboard':
                                     st.markdown(f"**{num}**")
                                 with col_tool:
                                     st.markdown(f"**{row['Instrumento']}** ({row['Especificacao']})")
+                                    st.markdown(f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
                                 with col_btn:
                                     if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
                                         agora = datetime.now(FUSO_HORARIO_BRASIL)
