@@ -59,8 +59,19 @@ if 'ferramentas_selecionadas' not in st.session_state:
 modo_acesso = "Chão de Fábrica (Apenas Visão)"
 
 # Verifica se o link acessado possui a "chave" secreta na URL
-if "acesso" in st.query_params and st.query_params["acesso"] == "admin":
-    modo_acesso = "Qualidade (Interativo)"
+# Tenta diferentes formas de ler o parâmetro para compatibilidade
+try:
+    params = st.query_params
+    if "acesso" in params:
+        valor_acesso = params["acesso"]
+        # Se for uma lista, pega o primeiro valor
+        if isinstance(valor_acesso, list):
+            valor_acesso = valor_acesso[0] if valor_acesso else ""
+        if valor_acesso == "admin":
+            modo_acesso = "Qualidade (Interativo)"
+except Exception as e:
+    # Fallback: tenta ler da URL manualmente
+    pass
 
 
 # ==========================================
