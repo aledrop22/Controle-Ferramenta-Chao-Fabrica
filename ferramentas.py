@@ -71,12 +71,14 @@ def foto_por_nome(nome):
 # ==========================================
 # DEFINIÇÃO DE ACESSO VIA LINK (URL)
 # ==========================================
-# Por padrão, o sistema sempre abre no modo bloqueado (Chão de Fábrica)
-modo_acesso = "Chão de Fábrica (Apenas Visão)"
+# Por padrão, usamos o modo interativo (Retirada/Devolução).
+# O modo "Chão de Fábrica (Apenas Visão)" permanece acessível via
+# parâmetro de URL `?acesso=chao` quando necessário.
+modo_acesso = "Qualidade (Interativo)"
 
-# Verifica se o link acessado possui a "chave" secreta na URL
-if "acesso" in st.query_params and st.query_params["acesso"] == "admin":
-    modo_acesso = "Qualidade (Interativo)"
+# Se `acesso=chao` na URL, exibe apenas a visão pública (somente leitura).
+if "acesso" in st.query_params and st.query_params["acesso"] == "chao":
+    modo_acesso = "Chão de Fábrica (Apenas Visão)"
 
 
 # ==========================================
