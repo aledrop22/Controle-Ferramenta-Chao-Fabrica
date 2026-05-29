@@ -5,7 +5,8 @@ import os
 import pytz
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
-st.set_page_config(page_title="Controle de Ferramentas - Tempo Real", layout="wide")
+st.set_page_config(
+    page_title="Controle de Ferramentas - Tempo Real", layout="wide")
 
 # CSS para responsividade
 st.markdown("""
@@ -22,15 +23,19 @@ ARQUIVO_CSV = 'registro_movimentacao_instrumentos.csv'
 FUSO_HORARIO_BRASIL = pytz.timezone('America/Sao_Paulo')
 
 # --- 1. FUNÇÕES DE BANCO DE DADOS (CSV) ---
+
+
 def carregar_dados():
     if os.path.exists(ARQUIVO_CSV):
-        df = pd.read_csv(ARQUIVO_CSV, sep=';', encoding='utf-8-sig', dtype=str).fillna("")
+        df = pd.read_csv(ARQUIVO_CSV, sep=';',
+                         encoding='utf-8-sig', dtype=str).fillna("")
         # Se o CSV antigo não tiver a coluna 'Setor', nós adicionamos para não dar erro
         if 'Setor' not in df.columns:
             df.insert(4, 'Setor', 'Não Informado')
         return df
     else:
         return pd.DataFrame(columns=['ID', 'Instrumento', 'Especificacao', 'Operador', 'Setor', 'Maquina', 'Data_Retirada', 'Hora_Retirada', 'Data_Retorno', 'Hora_Retorno', 'Status'])
+
 
 def salvar_dados(df):
     try:
@@ -39,6 +44,7 @@ def salvar_dados(df):
     except Exception as e:
         st.error(f"❌ Erro ao salvar dados no CSV: {str(e)}")
         return False
+
 
 # Inicialização de variáveis de sessão
 if 'df_dados' not in st.session_state:
@@ -52,26 +58,27 @@ if 'setor_logado' not in st.session_state:
 if 'ferramentas_selecionadas' not in st.session_state:
     st.session_state.ferramentas_selecionadas = []
 
+# Função utilitária para gerar placeholder de foto por nome (uso no modo somente visualização)
+
+
+def foto_por_nome(nome):
+    cores = ['4A90E2', '50E3C2', 'F5A623',
+             'D0021B', 'BD10E0', '8B572A', '417505']
+    cor = cores[abs(hash(nome)) % len(cores)]
+    return f"https://placehold.co/150x150/{cor}/FFFFFF?text={nome.replace(' ', '+')}"
+
+
 # ==========================================
 # DEFINIÇÃO DE ACESSO VIA LINK (URL)
 # ==========================================
-# Por padrão, o sistema sempre abre no modo bloqueado (Chão de Fábrica)
-modo_acesso = "Chão de Fábrica (Apenas Visão)"
+# Por padrão, usamos o modo interativo (Retirada/Devolução).
+# O modo "Chão de Fábrica (Apenas Visão)" permanece acessível via
+# parâmetro de URL `?acesso=chao` quando necessário.
+modo_acesso = "Qualidade (Interativo)"
 
-# Verifica se o link acessado possui a "chave" secreta na URL
-# Tenta diferentes formas de ler o parâmetro para compatibilidade
-try:
-    params = st.query_params
-    if "acesso" in params:
-        valor_acesso = params["acesso"]
-        # Se for uma lista, pega o primeiro valor
-        if isinstance(valor_acesso, list):
-            valor_acesso = valor_acesso[0] if valor_acesso else ""
-        if valor_acesso == "admin":
-            modo_acesso = "Qualidade (Interativo)"
-except Exception as e:
-    # Fallback: tenta ler da URL manualmente
-    pass
+# Se `acesso=chao` na URL, exibe apenas a visão pública (somente leitura).
+if "acesso" in st.query_params and st.query_params["acesso"] == "chao":
+    modo_acesso = "Chão de Fábrica (Apenas Visão)"
 
 
 # ==========================================
@@ -79,36 +86,35 @@ except Exception as e:
 # ==========================================
 if modo_acesso == "Chão de Fábrica (Apenas Visão)":
     st.title("🏭 Ferramentas no Chão de Fábrica")
-    st.markdown("*Painel estático para visualização. Retiradas devem ser feitas na Qualidade.*")
-    
+    st.markdown(
+        "*Visão simplificada — apenas leitura. Retiradas/Devoluções via Qualidade.*")
+
     col_refresh, _ = st.columns([2, 8])
     with col_refresh:
-        # No Streamlit Cloud, recarregar a página ajuda a puxar os dados atualizados
         if st.button("🔄 Atualizar Tela", use_container_width=True):
             st.session_state.df_dados = carregar_dados()
             st.rerun()
-            
+
     st.markdown("---")
-    
+
     df = st.session_state.df_dados
     df_uso = df[df['Status'] == 'Em Uso']
-    
+
     if not df_uso.empty:
-        colunas_por_linha = 3
-        cols = st.columns(colunas_por_linha)
-        
-        for index, row in df_uso.reset_index().iterrows():
-            with cols[index % colunas_por_linha]:
-                st.markdown(f"""
-                    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 6px solid #007BFF; margin-bottom: 15px;'>
-                        <h4 style='margin-top:0; color: #333;'>{row['Instrumento']}</h4>
-                        <p style='margin:0; font-size: 16px;'><strong>Detalhe:</strong> {row['Especificacao']}</p>
-                        <p style='margin:5px 0 0 0;'>👤 <strong>{row['Operador']}</strong> ({row['Setor']})</p>
-                        <p style='margin:0;'>🏭 <strong>{row['Maquina']}</strong></p>
-                        <hr style='margin: 10px 0; border: 0; border-top: 1px solid #ddd;'>
-                        <p style='margin:0; font-size: 13px; color: #666;'>📅 Retirado: {row['Data_Retirada']} às {row['Hora_Retirada']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+        grouped = df_uso.groupby(['Operador', 'Setor', 'Maquina'])
+        for (operador, setor, maquina), group in grouped:
+            with st.container():
+                foto_op = foto_por_nome(operador)
+                c1, c2 = st.columns([0.5, 5])
+                with c1:
+                    st.image(foto_op, width=60)
+                with c2:
+                    st.markdown(
+                        f"👤 **{operador}** ({setor}) | 🏭 **{maquina}**")
+                    st.markdown(f"**{len(group)} ferramenta(s)**")
+                    for idx, row in group.iterrows():
+                        st.markdown(
+                            f"- **{row['Instrumento']}** ({row['Especificacao']}) — 📅 {row['Data_Retirada']} às {row['Hora_Retirada']}")
     else:
         st.success("✅ Nenhuma ferramenta retida no chão de fábrica no momento.")
 
@@ -126,28 +132,31 @@ elif modo_acesso == "Qualidade (Interativo)":
     }
 
     maquinas_lista = [
-        "Selecione...", "GL 01", "GL 02", "CNC 01", "CNC 02", 
-        "FRESA 01", "FRESA 02", "TORNO 01", "TORNO 02", "TORNO 03", 
+        "Selecione...", "GL 01", "GL 02", "CNC 01", "CNC 02",
+        "FRESA 01", "FRESA 02", "TORNO 01", "TORNO 02", "TORNO 03",
         "PRODUÇÃO", "EXPEDIÇÃO", "ESTOQUE", "MANUTENÇÃO", "PCP"
     ]
 
     # Geração automática de fotos temporárias para todos os operadores
-    todos_operadores = [nome for lista in setores_operadores.values() for nome in lista]
+    todos_operadores = [nome for lista in setores_operadores.values()
+                        for nome in lista]
     # Cores diferentes para dar um visual legal
-    cores = ['4A90E2', '50E3C2', 'F5A623', 'D0021B', 'BD10E0', '8B572A', '417505']
-    fotos_operadores = {nome: f"https://placehold.co/150x150/{cores[i % len(cores)]}/FFFFFF?text={nome.replace(' ', '+')}" for i, nome in enumerate(todos_operadores)}
+    cores = ['4A90E2', '50E3C2', 'F5A623',
+             'D0021B', 'BD10E0', '8B572A', '417505']
+    fotos_operadores = {
+        nome: f"https://placehold.co/150x150/{cores[i % len(cores)]}/FFFFFF?text={nome.replace(' ', '+')}" for i, nome in enumerate(todos_operadores)}
 
     # --- 3. DADOS DO INVENTÁRIO PADRÃO ---
     estoque = {
         'Porca Calibradora': [
-            'M3 x 0,35', 'M4 x 0,5', 'M5 x 0,5', 'M6 x 0,75', 'M8 x 1', 
-            'M10 x 1', 'M12 x 1', 'M12 x 1,5', 'M14 x 1', 'M14 x 1,5', 
-            'M16 x 1', 'M16 x 1,5', 'M18 x 1', 'M18 x 1,5', 'M20 x 1', 
+            'M3 x 0,35', 'M4 x 0,5', 'M5 x 0,5', 'M6 x 0,75', 'M8 x 1',
+            'M10 x 1', 'M12 x 1', 'M12 x 1,5', 'M14 x 1', 'M14 x 1,5',
+            'M16 x 1', 'M16 x 1,5', 'M18 x 1', 'M18 x 1,5', 'M20 x 1',
             'M20 x 1,5', 'M22 x 1,5', 'M24 x 1,5', 'M27 x 1,5', 'M30 x 1,5'
         ],
         'Micrômetro': [
-            '0 - 25', '25 - 50', '50 - 75', '75 - 100', '100 - 125', 
-            '125 - 150', '150 - 175', '175 - 200', '200 - 225', 
+            '0 - 25', '25 - 50', '50 - 75', '75 - 100', '100 - 125',
+            '125 - 150', '150 - 175', '175 - 200', '200 - 225',
             '225 - 250', '250 - 275', '275 - 300', '0 - 1"', '1 - 2"'
         ],
         'Súbito': ['6 - 10', '10 - 18', '18 - 35', '35 - 50', '50 - 160'],
@@ -162,7 +171,7 @@ elif modo_acesso == "Qualidade (Interativo)":
     if st.session_state.tela_atual == 'dashboard':
         # --- TELA 1: DASHBOARD EM TEMPO REAL ---
         st.title("📊 Painel de Ferramentas - Tempo Real")
-        
+
         col_btn, _ = st.columns([2, 8])
         with col_btn:
             if st.button("➕ Nova Retirada", width='stretch', type="primary"):
@@ -170,7 +179,7 @@ elif modo_acesso == "Qualidade (Interativo)":
                 st.session_state.operador_logado = None
                 st.session_state.setor_logado = None
                 st.rerun()
-                
+
         st.markdown("---")
 
         df = st.session_state.df_dados
@@ -182,41 +191,51 @@ elif modo_acesso == "Qualidade (Interativo)":
                     <h4 style="margin:0;">🟢 Ferramentas em Uso (Tempo Real)</h4>
                 </div>
             """, unsafe_allow_html=True)
-            
+
             df_uso = df[df['Status'] == 'Em Uso']
-            
+
             if not df_uso.empty:
                 # Group by user only (regardless of date and time)
                 grouped = df_uso.groupby(['Operador', 'Setor', 'Maquina'])
-                
+
                 for (operador, setor, maquina), group in grouped:
                     with st.container(border=True):
-                        foto_op = fotos_operadores.get(operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
-                        
+                        foto_op = fotos_operadores.get(
+                            operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
+
                         c1, c2 = st.columns([0.5, 5])
                         with c1:
                             st.image(foto_op, width=60)
                         with c2:
-                            st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
+                            st.markdown(
+                                f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
                             st.markdown(f"**{len(group)} ferramenta(s)**")
                             for num, (idx, row) in enumerate(group.iterrows(), 1):
                                 with st.container(border=True):
-                                    col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
+                                    col_num, col_tool, col_btn = st.columns(
+                                        [0.3, 5, 1])
                                     with col_num:
                                         st.markdown(f"**{num}**")
                                     with col_tool:
-                                        st.markdown(f"**{row['Instrumento']}** ({row['Especificacao']})")
-                                        st.markdown(f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
+                                        st.markdown(
+                                            f"**{row['Instrumento']}** ({row['Especificacao']})")
+                                        st.markdown(
+                                            f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
                                     with col_btn:
                                         if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
-                                            agora = datetime.now(FUSO_HORARIO_BRASIL)
-                                            st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                            st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                            st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                            agora = datetime.now(
+                                                FUSO_HORARIO_BRASIL)
+                                            st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime(
+                                                "%d/%m/%Y")
+                                            st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime(
+                                                "%H:%M")
+                                            st.session_state.df_dados.loc[idx,
+                                                                          'Status'] = 'Devolvido'
                                             if salvar_dados(st.session_state.df_dados):
                                                 st.rerun()
                                             else:
-                                                st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
+                                                st.error(
+                                                    "❌ Não foi possível salvar a devolução. Tente novamente.")
             else:
                 st.info("Nenhuma ferramenta retirada no momento.")
 
@@ -226,15 +245,18 @@ elif modo_acesso == "Qualidade (Interativo)":
                     <h4 style="margin:0;">🔴 Histórico de Devoluções</h4>
                 </div>
             """, unsafe_allow_html=True)
-            
+
             df_devolvidos = df[df['Status'] == 'Devolvido']
-            
+
             if not df_devolvidos.empty:
                 # Criar colunas combinadas de data/hora
                 df_devolvidos = df_devolvidos.copy()
-                df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + ' às ' + df_devolvidos['Hora_Retirada']
-                df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + ' às ' + df_devolvidos['Hora_Retorno']
-                df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador', 'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
+                df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + \
+                    ' às ' + df_devolvidos['Hora_Retirada']
+                df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + \
+                    ' às ' + df_devolvidos['Hora_Retorno']
+                df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador',
+                                            'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
                 st.dataframe(df_display, hide_index=True)
             else:
                 st.info("Nenhuma devolução registrada ainda.")
@@ -256,14 +278,16 @@ elif modo_acesso == "Qualidade (Interativo)":
         # --- PASSO 1: LOGIN (POR SETOR) ---
         if st.session_state.operador_logado is None:
             st.subheader("👤 Passo 1: Quem é você?")
-            
+
             # Filtro de setor primeiro
-            setor_escolhido = st.selectbox("Selecione seu Setor:", ["Selecione..."] + list(setores_operadores.keys()))
-            
+            setor_escolhido = st.selectbox("Selecione seu Setor:", [
+                                           "Selecione..."] + list(setores_operadores.keys()))
+
             if setor_escolhido != "Selecione...":
-                st.write(f"Operadores do setor: **{setor_escolhido}** (Clique na sua foto)")
+                st.write(
+                    f"Operadores do setor: **{setor_escolhido}** (Clique na sua foto)")
                 nomes_setor = setores_operadores[setor_escolhido]
-                
+
                 # Mostra as fotos limitadas a 5 por linha
                 colunas_por_linha = 5
                 for i in range(0, len(nomes_setor), colunas_por_linha):
@@ -272,20 +296,23 @@ elif modo_acesso == "Qualidade (Interativo)":
                         if i + j < len(nomes_setor):
                             nome_op = nomes_setor[i + j]
                             with cols[j]:
-                                st.image(fotos_operadores[nome_op], width='stretch')
+                                st.image(
+                                    fotos_operadores[nome_op], width='stretch')
                                 if st.button(f"{nome_op}", key=f"btn_login_{nome_op}", width='content'):
                                     st.session_state.operador_logado = nome_op
                                     st.session_state.setor_logado = setor_escolhido
                                     st.rerun()
-            st.stop() # Interrompe a tela até o operador se identificar
+            st.stop()  # Interrompe a tela até o operador se identificar
 
         # --- SE O OPERADOR JÁ ESTIVER LOGADO ---
         col_foto_logado, col_dados_logado, col_trocar = st.columns([1, 8, 2])
         with col_foto_logado:
-            st.image(fotos_operadores[st.session_state.operador_logado], width=60)
+            st.image(
+                fotos_operadores[st.session_state.operador_logado], width=60)
         with col_dados_logado:
             st.markdown(f"### Olá, {st.session_state.operador_logado}!")
-            st.write(f"Setor: **{st.session_state.setor_logado}** | Siga para os próximos passos.")
+            st.write(
+                f"Setor: **{st.session_state.setor_logado}** | Siga para os próximos passos.")
         with col_trocar:
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🔄 Trocar Operador", width='stretch'):
@@ -298,27 +325,31 @@ elif modo_acesso == "Qualidade (Interativo)":
 
         # --- PASSO 2: MÁQUINA / LOCAL ---
         st.subheader("🏭 Passo 2: Onde você vai usar?")
-        maquina_selecionada = st.selectbox("Selecione a Máquina ou Local de Uso:", maquinas_lista)
+        maquina_selecionada = st.selectbox(
+            "Selecione a Máquina ou Local de Uso:", maquinas_lista)
 
         st.markdown("---")
 
         # --- PASSO 3: FERRAMENTA (SÓ APARECE SE MÁQUINA FOR SELECIONADA) ---
         if maquina_selecionada != "Selecione...":
             st.subheader("🔧 Passo 3: O que você vai retirar?")
-            st.write(f"🏭 Máquina: **{maquina_selecionada}** | Siga para os próximos passos.")
-            
+            st.write(
+                f"🏭 Máquina: **{maquina_selecionada}** | Siga para os próximos passos.")
+
             # Mostrar ferramentas selecionadas
             if st.session_state.ferramentas_selecionadas:
                 st.markdown("**Ferramentas selecionadas:**")
                 for ferramenta in st.session_state.ferramentas_selecionadas:
                     st.markdown(f"- {ferramenta}")
-            
+
             # Adicionada a aba "Outras Ferramentas" no final
-            tabs = st.tabs(["Porca Calibradora", "Micrômetros", "Súbitos", "Relógio Comparador", "Paquímetro Digital", "Outras Ferramentas ➕"])
+            tabs = st.tabs(["Porca Calibradora", "Micrômetros", "Súbitos",
+                           "Relógio Comparador", "Paquímetro Digital", "Outras Ferramentas ➕"])
 
             def item_disponivel(instrumento, especificacao):
                 df = st.session_state.df_dados
-                em_uso = df[(df['Instrumento'] == instrumento) & (df['Especificacao'] == especificacao) & (df['Status'] == 'Em Uso')]
+                em_uso = df[(df['Instrumento'] == instrumento) & (
+                    df['Especificacao'] == especificacao) & (df['Status'] == 'Em Uso')]
                 return em_uso.empty
 
             def item_ja_selecionado(categoria, espec):
@@ -328,8 +359,8 @@ elif modo_acesso == "Qualidade (Interativo)":
                 with tabs[idx_tab]:
                     st.markdown(f"##### {categoria}")
                     itens = estoque[categoria]
-                    colunas_por_linha = 5 
-                    
+                    colunas_por_linha = 5
+
                     for i in range(0, len(itens), colunas_por_linha):
                         cols = st.columns(colunas_por_linha)
                         for j in range(colunas_por_linha):
@@ -338,9 +369,10 @@ elif modo_acesso == "Qualidade (Interativo)":
                                 with cols[j]:
                                     st.container(border=True)
                                     texto_img = espec.replace(' ', '')
-                                    st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width='stretch')
+                                    st.image(
+                                        f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width='stretch')
                                     st.markdown(f"**{espec}**")
-                                    
+
                                     if item_disponivel(categoria, espec):
                                         if item_ja_selecionado(categoria, espec):
                                             col_sel, col_desm = st.columns(2)
@@ -349,13 +381,16 @@ elif modo_acesso == "Qualidade (Interativo)":
                                             with col_desm:
                                                 if st.button("Desmarcar", key=f"btn_desm_{categoria}_{espec}", width='stretch'):
                                                     ferramenta_key = f"{categoria} - {espec}"
-                                                    st.session_state.ferramentas_selecionadas.remove(ferramenta_key)
+                                                    st.session_state.ferramentas_selecionadas.remove(
+                                                        ferramenta_key)
                                                     st.rerun()
                                         else:
                                             if st.button("Selecionar", key=f"btn_sel_{categoria}_{espec}", width='stretch'):
                                                 ferramenta_key = f"{categoria} - {espec}"
-                                                st.session_state.ferramentas_selecionadas.append(ferramenta_key)
-                                                st.success(f"Adicionado: {espec}")
+                                                st.session_state.ferramentas_selecionadas.append(
+                                                    ferramenta_key)
+                                                st.success(
+                                                    f"Adicionado: {espec}")
                                                 st.rerun()
                                     else:
                                         st.error("Em uso")
@@ -370,38 +405,46 @@ elif modo_acesso == "Qualidade (Interativo)":
             # Aba "Outras Ferramentas" (Campo de Texto)
             with tabs[5]:
                 st.markdown("##### 🛠️ Outras Ferramentas (Diversas)")
-                st.info("Use este espaço para retirar alicates, martelos, chaves, etc.")
-                
-                outra_ferramenta = st.text_input("Digite o nome ou descrição da ferramenta:")
-                
+                st.info(
+                    "Use este espaço para retirar alicates, martelos, chaves, etc.")
+
+                outra_ferramenta = st.text_input(
+                    "Digite o nome ou descrição da ferramenta:")
+
                 col_sel, col_desm = st.columns(2)
                 with col_sel:
                     if st.button("Selecionar esta ferramenta digitada", width='stretch'):
                         if outra_ferramenta.strip() == "":
-                            st.warning("Por favor, digite o nome da ferramenta antes de selecionar.")
+                            st.warning(
+                                "Por favor, digite o nome da ferramenta antes de selecionar.")
                         else:
                             ferramenta_key = f"Ferramenta Diversa - {outra_ferramenta}"
                             if ferramenta_key not in st.session_state.ferramentas_selecionadas:
-                                st.session_state.ferramentas_selecionadas.append(ferramenta_key)
+                                st.session_state.ferramentas_selecionadas.append(
+                                    ferramenta_key)
                                 st.success(f"Adicionado: {outra_ferramenta}")
                                 st.rerun()
                             else:
-                                st.warning("Esta ferramenta já foi selecionada.")
+                                st.warning(
+                                    "Esta ferramenta já foi selecionada.")
 
         st.markdown("---")
-        
+
         # --- PASSO 4: CONFIRMAÇÃO FINAL ---
         if st.button("✅ Confirmo a retirada em meu nome", width='stretch', type="primary"):
             if maquina_selecionada == "Selecione...":
-                st.warning("⚠️ Atenção: Por favor, selecione a Máquina / Local no Passo 2.")
+                st.warning(
+                    "⚠️ Atenção: Por favor, selecione a Máquina / Local no Passo 2.")
             elif not st.session_state.ferramentas_selecionadas:
-                st.warning("⚠️ Atenção: Por favor, selecione pelo menos uma ferramenta nas abas do Passo 3.")
+                st.warning(
+                    "⚠️ Atenção: Por favor, selecione pelo menos uma ferramenta nas abas do Passo 3.")
             else:
                 agora = datetime.now(FUSO_HORARIO_BRASIL)
                 for ferramenta in st.session_state.ferramentas_selecionadas:
                     categoria, detalhe = ferramenta.split(" - ", 1)
-                    novo_id = agora.strftime('%Y%m%d%H%M%S') + str(len(st.session_state.df_dados))
-                    
+                    novo_id = agora.strftime(
+                        '%Y%m%d%H%M%S') + str(len(st.session_state.df_dados))
+
                     novo_registro = {
                         'ID': novo_id,
                         'Instrumento': categoria,
@@ -415,9 +458,10 @@ elif modo_acesso == "Qualidade (Interativo)":
                         'Hora_Retorno': "",
                         'Status': "Em Uso"
                     }
-                    
+
                     df_novo = pd.DataFrame([novo_registro])
-                    st.session_state.df_dados = pd.concat([st.session_state.df_dados, df_novo], ignore_index=True)
+                    st.session_state.df_dados = pd.concat(
+                        [st.session_state.df_dados, df_novo], ignore_index=True)
                 if salvar_dados(st.session_state.df_dados):
                     # Limpa tudo e volta para o Dashboard
                     st.session_state.ferramentas_selecionadas = []
@@ -426,4 +470,5 @@ elif modo_acesso == "Qualidade (Interativo)":
                     st.session_state.tela_atual = 'dashboard'
                     st.rerun()
                 else:
-                    st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
+                    st.error(
+                        "❌ Não foi possível salvar a retirada. Tente novamente.")
