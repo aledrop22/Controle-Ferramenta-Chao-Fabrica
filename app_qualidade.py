@@ -11,66 +11,70 @@ st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wid
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
 <style>
-    /* Geral - Imagens */
+    /* Geral - Imagens menores para caber mais colunas */
     img {
-        max-width: 100px !important;
-        width: 100px !important;
+        max-width: 70px !important;
+        width: 70px !important;
         height: auto !important;
     }
     
-    /* Mobile - Ajustes gerais */
+    /* Containers com borda - compacto */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
+        gap: 0.3rem !important;
+    }
+    
+    /* Mobile - Ajustes específicos */
     @media (max-width: 768px) {
-        /* Colunas ficam verticais */
-        .stColumns > div {
-            flex-direction: column !important;
-        }
-        
-        /* Imagens menores em mobile */
+        /* Imagens ainda menores em mobile */
         img {
-            max-width: 60px !important;
-            width: 60px !important;
+            max-width: 50px !important;
+            width: 50px !important;
         }
         
-        /* Tabs/Abas - scroll horizontal e melhor espaçamento */
+        /* Tabs/Abas - scroll horizontal */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 8px !important;
+            gap: 4px !important;
             overflow-x: auto !important;
             flex-wrap: nowrap !important;
         }
         
         .stTabs [data-baseweb="tab"] {
-            font-size: 12px !important;
-            padding: 8px 12px !important;
+            font-size: 11px !important;
+            padding: 6px 10px !important;
             white-space: nowrap !important;
         }
         
-        /* Containers com borda - melhor espaçamento */
-        div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
-            gap: 0.5rem !important;
-        }
-        
-        /* Botões - tamanho adequado para toque */
+        /* Botões - compactos mas touch-friendly */
         button {
-            min-height: 44px !important;
-            font-size: 14px !important;
+            min-height: 40px !important;
+            font-size: 12px !important;
+            padding: 8px 12px !important;
         }
         
-        /* Texto - tamanho legível */
+        /* Texto - tamanho compacto */
         h1, h2, h3, h4 {
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
         }
         
-        /* Selectbox e inputs - melhor toque */
+        /* Selectbox e inputs - compactos */
         .stSelectbox, .stTextInput {
-            font-size: 16px !important;
+            font-size: 14px !important;
         }
     }
     
-    /* Desktop - mantém 5 colunas */
-    @media (min-width: 769px) {
+    /* Tablet - médio */
+    @media (min-width: 769px) and (max-width: 1024px) {
         img {
-            max-width: 100px !important;
-            width: 100px !important;
+            max-width: 60px !important;
+            width: 60px !important;
+        }
+    }
+    
+    /* Desktop - mantém tamanho padrão */
+    @media (min-width: 1025px) {
+        img {
+            max-width: 70px !important;
+            width: 70px !important;
         }
     }
 </style>
@@ -261,15 +265,15 @@ elif st.session_state.tela_atual == 'retirada':
             st.write(f"Operadores do setor: **{setor_escolhido}** (Clique na sua foto)")
             nomes_setor = setores_operadores[setor_escolhido]
             
-            # Mostra as fotos limitadas a 5 por linha
-            colunas_por_linha = 5
+            # Mostra as fotos em 6 colunas para aproveitar melhor o espaço
+            colunas_por_linha = 6
             for i in range(0, len(nomes_setor), colunas_por_linha):
                 cols = st.columns(colunas_por_linha)
                 for j in range(colunas_por_linha):
                     if i + j < len(nomes_setor):
                         nome_op = nomes_setor[i + j]
                         with cols[j]:
-                            st.image(fotos_operadores[nome_op], width=100)
+                            st.image(fotos_operadores[nome_op], width=70)
                             if st.button(f"{nome_op}", key=f"btn_login_{nome_op}", width='content'):
                                 st.session_state.operador_logado = nome_op
                                 st.session_state.setor_logado = setor_escolhido
@@ -325,7 +329,7 @@ elif st.session_state.tela_atual == 'retirada':
             with tabs[idx_tab]:
                 st.markdown(f"##### {categoria}")
                 itens = estoque[categoria]
-                colunas_por_linha = 5
+                colunas_por_linha = 6
                 
                 for i in range(0, len(itens), colunas_por_linha):
                     cols = st.columns(colunas_por_linha)
@@ -335,7 +339,7 @@ elif st.session_state.tela_atual == 'retirada':
                             with cols[j]:
                                 st.container(border=True)
                                 texto_img = espec.replace(' ', '')
-                                st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=100)
+                                st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=70)
                                 st.markdown(f"**{espec}**")
                                 
                                 if item_disponivel(categoria, espec):
