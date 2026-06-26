@@ -11,15 +11,67 @@ st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wid
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
 <style>
-    @media (max-width: 768px) {
-        .stColumns > div {
-            flex-direction: column !important;
-        }
-    }
+    /* Geral - Imagens */
     img {
         max-width: 100px !important;
         width: 100px !important;
         height: auto !important;
+    }
+    
+    /* Mobile - Ajustes gerais */
+    @media (max-width: 768px) {
+        /* Colunas ficam verticais */
+        .stColumns > div {
+            flex-direction: column !important;
+        }
+        
+        /* Imagens menores em mobile */
+        img {
+            max-width: 60px !important;
+            width: 60px !important;
+        }
+        
+        /* Tabs/Abas - scroll horizontal e melhor espaçamento */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px !important;
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            font-size: 12px !important;
+            padding: 8px 12px !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Containers com borda - melhor espaçamento */
+        div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
+            gap: 0.5rem !important;
+        }
+        
+        /* Botões - tamanho adequado para toque */
+        button {
+            min-height: 44px !important;
+            font-size: 14px !important;
+        }
+        
+        /* Texto - tamanho legível */
+        h1, h2, h3, h4 {
+            font-size: 1.2rem !important;
+        }
+        
+        /* Selectbox e inputs - melhor toque */
+        .stSelectbox, .stTextInput {
+            font-size: 16px !important;
+        }
+    }
+    
+    /* Desktop - mantém 5 colunas */
+    @media (min-width: 769px) {
+        img {
+            max-width: 100px !important;
+            width: 100px !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -273,7 +325,7 @@ elif st.session_state.tela_atual == 'retirada':
             with tabs[idx_tab]:
                 st.markdown(f"##### {categoria}")
                 itens = estoque[categoria]
-                colunas_por_linha = 5 
+                colunas_por_linha = 5
                 
                 for i in range(0, len(itens), colunas_por_linha):
                     cols = st.columns(colunas_por_linha)
