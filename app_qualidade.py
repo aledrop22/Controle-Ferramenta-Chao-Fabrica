@@ -8,13 +8,18 @@ from filelock import FileLock
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
 st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide")
 
-# CSS para responsividade
+# CSS para responsividade e tamanho de imagens
 st.markdown("""
 <style>
     @media (max-width: 768px) {
         .stColumns > div {
             flex-direction: column !important;
         }
+    }
+    img {
+        max-width: 100px !important;
+        width: 100px !important;
+        height: auto !important;
     }
 </style>
 """, unsafe_allow_html=True)
