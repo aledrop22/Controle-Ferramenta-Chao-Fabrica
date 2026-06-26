@@ -212,7 +212,7 @@ elif st.session_state.tela_atual == 'retirada':
                     if i + j < len(nomes_setor):
                         nome_op = nomes_setor[i + j]
                         with cols[j]:
-                            st.image(fotos_operadores[nome_op], width=100)
+                            st.image(fotos_operadores[nome_op], width=60)
                             if st.button(f"{nome_op}", key=f"btn_login_{nome_op}", width='content'):
                                 st.session_state.operador_logado = nome_op
                                 st.session_state.setor_logado = setor_escolhido
@@ -278,7 +278,7 @@ elif st.session_state.tela_atual == 'retirada':
                             with cols[j]:
                                 st.container(border=True)
                                 texto_img = espec.replace(' ', '')
-                                st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=100)
+                                st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=60)
                                 st.markdown(f"**{espec}**")
                                 
                                 if item_disponivel(categoria, espec):
