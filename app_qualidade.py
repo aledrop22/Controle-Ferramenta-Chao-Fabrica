@@ -119,8 +119,8 @@ if 'ferramentas_selecionadas' not in st.session_state:
 
 # --- 2. DADOS DA FÁBRICA (Operadores, Setores e Máquinas) ---
 setores_operadores = {
-    "Usinagem": ["Pedro Henrique", "Alex", "Vitor", "Rodrigo", "Vinícius", "Márcio", "Gabriel", "Lucas", "Jadson"],
-    "Produção": ["Sr. Luis", "Luis", "Daniel", "Felipe", "Jadson"],
+    "Usinagem": ["Alex", "Leandro", "Pedro Henrique", "Rodrigo", "Vinícius", "Márcio", "Gabriel", "Lucas", "Jadson"],
+    "Produção": ["Sr. Luis", "Luis", "Pablo", "Felipe", "Amadeus"],
     "Manutenção": ["Nilson", "Marcos", "Renato"],
     "Estoque": ["Elias", "Lucas", "Victor", "Rafael"],
     "Expedição": ["Karina", "Deise", "Frank", "Giulia", "Adriano", "Ismael"]
@@ -132,11 +132,10 @@ maquinas_lista = [
     "PRODUÇÃO", "EXPEDIÇÃO", "ESTOQUE", "MANUTENÇÃO", "PCP"
 ]
 
-# Geração automática de fotos temporárias para todos os operadores
+# Geração automática de fotos reais para todos os operadores
 todos_operadores = [nome for lista in setores_operadores.values() for nome in lista]
-# Cores diferentes para dar um visual legal
-cores = ['4A90E2', '50E3C2', 'F5A623', 'D0021B', 'BD10E0', '8B572A', '417505']
-fotos_operadores = {nome: f"https://placehold.co/150x150/{cores[i % len(cores)]}/FFFFFF?text={nome.replace(' ', '+')}" for i, nome in enumerate(todos_operadores)}
+# Usa UI Faces para fotos reais de pessoas aleatórias
+fotos_operadores = {nome: f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={i % 70}" for i, nome in enumerate(todos_operadores)}
 
 # --- 3. DADOS DO INVENTÁRIO PADRÃO ---
 estoque = {
