@@ -6,7 +6,7 @@ import pytz
 from filelock import FileLock
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
-st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide")
+st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide", page_icon="🔧")
 
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
