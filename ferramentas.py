@@ -179,6 +179,16 @@ elif modo_acesso == "Qualidade (Interativo)":
                             st.markdown(
                                 f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
                             st.markdown(f"**{len(group)} ferramenta(s)**")
+                            if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary"):
+                                agora = datetime.now(FUSO_HORARIO_BRASIL)
+                                for idx in group.index:
+                                    st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                    st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                    st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                if salvar_dados(st.session_state.df_dados):
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
                             for num, (idx, row) in enumerate(group.iterrows(), 1):
                                 with st.container(border=True):
                                     col_num, col_tool, col_btn = st.columns(
