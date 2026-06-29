@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import pytz
 from filelock import FileLock
+import plotly.express as px
 from dados_comuns import setores_operadores, maquinas_lista, estoque
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
@@ -208,6 +209,27 @@ if st.session_state.tela_atual == 'dashboard':
             st.dataframe(df_display, hide_index=True)
         else:
             st.info("Nenhuma devolução registrada ainda.")
+
+    # --- GRÁFICO DE FERRAMENTAS MAIS USADAS ---
+    st.markdown("---")
+    st.subheader("📊 Ferramentas Mais Usadas")
+    if not df_uso.empty:
+        # Contar uso por tipo de ferramenta
+        contagem_ferramentas = df_uso['Instrumento'].value_counts().reset_index()
+        contagem_ferramentas.columns = ['Instrumento', 'Quantidade']
+
+        fig = px.bar(
+            contagem_ferramentas,
+            x='Instrumento',
+            y='Quantidade',
+            title='Ferramentas Mais Utilizadas',
+            color='Quantidade',
+            color_continuous_scale='Blues'
+        )
+        fig.update_layout(xaxis_title="Tipo de Ferramenta", yaxis_title="Quantidade em Uso")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Nenhum dado disponível para o gráfico.")
 
 elif st.session_state.tela_atual == 'retirada':
     # --- TELA 2: FLUXO DE RETIRADA ---
