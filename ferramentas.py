@@ -133,7 +133,6 @@ elif modo_acesso == "Qualidade (Interativo)":
     fotos_operadores = {
         nome: f"https://placehold.co/150x150/{cores[i % len(cores)]}/FFFFFF?text={nome.replace(' ', '+')}" for i, nome in enumerate(todos_operadores)}
 
-
     # ==========================================
     # LÓGICA DE NAVEGAÇÃO DE TELAS
     # ==========================================
