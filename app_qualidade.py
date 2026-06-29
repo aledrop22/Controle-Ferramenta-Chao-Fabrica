@@ -118,6 +118,8 @@ if 'setor_logado' not in st.session_state:
     st.session_state.setor_logado = None
 if 'ferramentas_selecionadas' not in st.session_state:
     st.session_state.ferramentas_selecionadas = []
+if 'passo_retirada' not in st.session_state:
+    st.session_state.passo_retirada = 1
 
 
 # Geração automática de fotos reais para todos os operadores
@@ -133,44 +135,50 @@ fotos_operadores = {nome: f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&
 if st.session_state.tela_atual == 'dashboard':
     # --- TELA 1: DASHBOARD EM TEMPO REAL ---
     st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
-    
-    col_btn, _ = st.columns([2, 8])
+
+    # Botão de ação destacado no topo
+    col_btn, col_stats = st.columns([2, 8])
     with col_btn:
         if st.button("➕ Nova Retirada", width='stretch', type="primary"):
             st.session_state.tela_atual = 'retirada'
             st.session_state.operador_logado = None
             st.session_state.setor_logado = None
             st.rerun()
-            
+    with col_stats:
+        # Estatísticas rápidas
+        df = st.session_state.df_dados
+        df_uso = df[df['Status'] == 'Em Uso']
+        df_devolvidos = df[df['Status'] == 'Devolvido']
+        st.metric("🟢 Em Uso", len(df_uso))
+        st.metric("🔴 Devolvidas Hoje", len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")]))
+
     st.markdown("---")
 
-    df = st.session_state.df_dados
-    col_em_uso, col_devolvidos = st.columns(2)
+    # Layout em duas colunas melhorado
+    col_em_uso, col_devolvidos = st.columns(2, gap="large")
 
     with col_em_uso:
         st.markdown("""
-            <div style="background-color: #d4edda; padding: 10px; border-radius: 5px; color: #155724; margin-bottom: 15px;">
-                <h4 style="margin:0;">🟢 Ferramentas em Uso (Tempo Real)</h4>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 style="margin:0; font-size: 18px;">🟢 Ferramentas em Uso (Tempo Real)</h4>
             </div>
         """, unsafe_allow_html=True)
-        
-        df_uso = df[df['Status'] == 'Em Uso']
-        
+
         if not df_uso.empty:
             # Group by user only (regardless of date and time)
             grouped = df_uso.groupby(['Operador', 'Setor', 'Maquina'])
-            
+
             for (operador, setor, maquina), group in grouped:
                 with st.container(border=True):
                     foto_op = fotos_operadores.get(operador, "https://placehold.co/50x50/CCCCCC/000000?text=?")
-                    
+
                     c1, c2 = st.columns([0.5, 5])
                     with c1:
                         st.image(foto_op, width=60)
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
                         st.markdown(f"**{len(group)} ferramenta(s)**")
-                        if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary"):
+                        if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary", use_container_width=True):
                             agora = datetime.now(FUSO_HORARIO_BRASIL)
                             for idx in group.index:
                                 st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
@@ -180,6 +188,7 @@ if st.session_state.tela_atual == 'dashboard':
                                 st.rerun()
                             else:
                                 st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
+                        st.markdown("---")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
                                 col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
@@ -203,20 +212,18 @@ if st.session_state.tela_atual == 'dashboard':
 
     with col_devolvidos:
         st.markdown("""
-            <div style="background-color: #f8d7da; padding: 10px; border-radius: 5px; color: #721c24; margin-bottom: 15px;">
-                <h4 style="margin:0;">🔴 Histórico de Devoluções</h4>
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 style="margin:0; font-size: 18px;">🔴 Histórico de Devoluções</h4>
             </div>
         """, unsafe_allow_html=True)
-        
-        df_devolvidos = df[df['Status'] == 'Devolvido']
-        
+
         if not df_devolvidos.empty:
             # Criar colunas combinadas de data/hora
             df_devolvidos = df_devolvidos.copy()
             df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + ' às ' + df_devolvidos['Hora_Retirada']
             df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + ' às ' + df_devolvidos['Hora_Retorno']
             df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador', 'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
-            st.dataframe(df_display, hide_index=True)
+            st.dataframe(df_display, hide_index=True, use_container_width=True)
         else:
             st.info("Nenhuma devolução registrada ainda.")
 
@@ -236,7 +243,11 @@ if st.session_state.tela_atual == 'dashboard':
             color='Quantidade',
             color_continuous_scale='Blues'
         )
-        fig.update_layout(xaxis_title="Tipo de Ferramenta", yaxis_title="Quantidade em Uso")
+        fig.update_layout(
+            xaxis_title="Tipo de Ferramenta",
+            yaxis_title="Quantidade em Uso",
+            yaxis=dict(tickmode='linear', tick0=0, dtick=1)
+        )
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Nenhum dado disponível para o gráfico.")
@@ -251,63 +262,107 @@ elif st.session_state.tela_atual == 'retirada':
         if st.button("🔙 Cancelar e Voltar", width='stretch'):
             st.session_state.tela_atual = 'dashboard'
             st.session_state.ferramentas_selecionadas = []
-            st.rerun()
-
-    st.markdown("---")
-
-    # --- PASSO 1: LOGIN (POR SETOR) ---
-    if st.session_state.operador_logado is None:
-        st.subheader("👤 Passo 1: Quem é você?")
-        
-        # Filtro de setor primeiro
-        setor_escolhido = st.selectbox("Selecione seu Setor:", ["Selecione..."] + list(setores_operadores.keys()))
-        
-        if setor_escolhido != "Selecione...":
-            st.write(f"Operadores do setor: **{setor_escolhido}** (Clique na sua foto)")
-            nomes_setor = setores_operadores[setor_escolhido]
-            
-            # Mostra as fotos em 6 colunas para aproveitar melhor o espaço
-            colunas_por_linha = 6
-            for i in range(0, len(nomes_setor), colunas_por_linha):
-                cols = st.columns(colunas_por_linha)
-                for j in range(colunas_por_linha):
-                    if i + j < len(nomes_setor):
-                        nome_op = nomes_setor[i + j]
-                        with cols[j]:
-                            st.image(fotos_operadores[nome_op], width=70)
-                            if st.button(f"{nome_op}", key=f"btn_login_{nome_op}", width='content'):
-                                st.session_state.operador_logado = nome_op
-                                st.session_state.setor_logado = setor_escolhido
-                                st.rerun()
-        st.stop() # Interrompe a tela até o operador se identificar
-
-    # --- SE O OPERADOR JÁ ESTIVER LOGADO ---
-    col_foto_logado, col_dados_logado, col_trocar = st.columns([1, 8, 2])
-    with col_foto_logado:
-        st.image(fotos_operadores[st.session_state.operador_logado], width=60)
-    with col_dados_logado:
-        st.markdown(f"### Olá, {st.session_state.operador_logado}!")
-        st.write(f"Setor: **{st.session_state.setor_logado}** | Siga para os próximos passos.")
-    with col_trocar:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔄 Trocar Operador", width='stretch'):
             st.session_state.operador_logado = None
             st.session_state.setor_logado = None
-            st.session_state.ferramentas_selecionadas = []
+            st.session_state.passo_retirada = 1
             st.rerun()
 
     st.markdown("---")
 
-    # --- PASSO 2: MÁQUINA / LOCAL ---
-    st.subheader("🏭 Passo 2: Onde você vai usar?")
-    maquina_selecionada = st.selectbox("Selecione a Máquina ou Local de Uso:", maquinas_lista)
+    # --- PASSO 1: ESCOLHER SETOR ---
+    if st.session_state.passo_retirada == 1:
+        st.markdown("""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="margin:0;">🏢 Passo 1: Qual é o seu setor?</h3>
+            </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
+        setor_escolhido = st.selectbox("Selecione seu Setor:", ["Selecione..."] + list(setores_operadores.keys()), label_visibility="collapsed")
 
-    # --- PASSO 3: FERRAMENTA (SÓ APARECE SE MÁQUINA FOR SELECIONADA) ---
-    if maquina_selecionada != "Selecione...":
-        st.subheader("🔧 Passo 3: O que você vai retirar?")
-        st.write(f"🏭 Máquina: **{maquina_selecionada}** | Siga para os próximos passos.")
+        if setor_escolhido != "Selecione...":
+            st.session_state.setor_logado = setor_escolhido
+            st.session_state.passo_retirada = 2
+            st.rerun()
+
+    # --- PASSO 2: ESCOLHER NOME ---
+    elif st.session_state.passo_retirada == 2:
+        st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="margin:0;">👤 Passo 2: Qual é o seu nome?</h3>
+                <p style="margin:5px 0 0 0; opacity: 0.9;">Setor: {st.session_state.setor_logado}</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        col_voltar_passo, _ = st.columns([1, 9])
+        with col_voltar_passo:
+            if st.button("⬅️ Voltar", width='stretch'):
+                st.session_state.setor_logado = None
+                st.session_state.passo_retirada = 1
+                st.rerun()
+
+        st.markdown("---")
+
+        nomes_setor = setores_operadores[st.session_state.setor_logado]
+        st.write(f"Operadores do setor: **{st.session_state.setor_logado}** (Clique na sua foto)")
+
+        # Mostra as fotos em 6 colunas para aproveitar melhor o espaço
+        colunas_por_linha = 6
+        for i in range(0, len(nomes_setor), colunas_por_linha):
+            cols = st.columns(colunas_por_linha)
+            for j in range(colunas_por_linha):
+                if i + j < len(nomes_setor):
+                    nome_op = nomes_setor[i + j]
+                    with cols[j]:
+                        st.image(fotos_operadores[nome_op], width=70)
+                        if st.button(f"{nome_op}", key=f"btn_login_{nome_op}", width='content'):
+                            st.session_state.operador_logado = nome_op
+                            st.session_state.passo_retirada = 3
+                            st.rerun()
+
+    # --- PASSO 3: ESCOLHER MÁQUINA ---
+    elif st.session_state.passo_retirada == 3:
+        st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="margin:0;">🏭 Passo 3: Onde você vai usar?</h3>
+                <p style="margin:5px 0 0 0; opacity: 0.9;">{st.session_state.operador_logado} - {st.session_state.setor_logado}</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        col_voltar_passo, _ = st.columns([1, 9])
+        with col_voltar_passo:
+            if st.button("⬅️ Voltar", width='stretch'):
+                st.session_state.operador_logado = None
+                st.session_state.passo_retirada = 2
+                st.rerun()
+
+        st.markdown("---")
+
+        maquina_selecionada = st.selectbox("Selecione a Máquina ou Local de Uso:", maquinas_lista)
+
+        if maquina_selecionada != "Selecione...":
+            st.session_state.maquina_selecionada = maquina_selecionada
+            st.session_state.passo_retirada = 4
+            st.rerun()
+
+    # --- PASSO 4: ESCOLHER FERRAMENTAS ---
+    elif st.session_state.passo_retirada == 4:
+        st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="margin:0;">🔧 Passo 4: O que você vai retirar?</h3>
+                <p style="margin:5px 0 0 0; opacity: 0.9;">{st.session_state.operador_logado} - {st.session_state.setor_logado} - {st.session_state.maquina_selecionada}</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        col_voltar_passo, _ = st.columns([1, 9])
+        with col_voltar_passo:
+            if st.button("⬅️ Voltar", width='stretch'):
+                st.session_state.maquina_selecionada = None
+                st.session_state.passo_retirada = 3
+                st.rerun()
+
+        st.markdown("---")
+
+        maquina_selecionada = st.session_state.maquina_selecionada
         
         # Mostrar ferramentas selecionadas
         if st.session_state.ferramentas_selecionadas:
@@ -390,42 +445,42 @@ elif st.session_state.tela_atual == 'retirada':
                         else:
                             st.warning("Esta ferramenta já foi selecionada.")
 
-    st.markdown("---")
-    
-    # --- PASSO 4: CONFIRMAÇÃO FINAL ---
-    if st.button("✅ Confirmo a retirada em meu nome", width='stretch', type="primary"):
-        if maquina_selecionada == "Selecione...":
-            st.warning("⚠️ Atenção: Por favor, selecione a Máquina / Local no Passo 2.")
-        elif not st.session_state.ferramentas_selecionadas:
-            st.warning("⚠️ Atenção: Por favor, selecione pelo menos uma ferramenta nas abas do Passo 3.")
-        else:
-            agora = datetime.now(FUSO_HORARIO_BRASIL)
-            for ferramenta in st.session_state.ferramentas_selecionadas:
-                categoria, detalhe = ferramenta.split(" - ", 1)
-                novo_id = agora.strftime('%Y%m%d%H%M%S') + str(len(st.session_state.df_dados))
-                
-                novo_registro = {
-                    'ID': novo_id,
-                    'Instrumento': categoria,
-                    'Especificacao': detalhe,
-                    'Operador': st.session_state.operador_logado,
-                    'Setor': st.session_state.setor_logado,
-                    'Maquina': maquina_selecionada,
-                    'Data_Retirada': agora.strftime("%d/%m/%Y"),
-                    'Hora_Retirada': agora.strftime("%H:%M"),
-                    'Data_Retorno': "",
-                    'Hora_Retorno': "",
-                    'Status': "Em Uso"
-                }
-                
-                df_novo = pd.DataFrame([novo_registro])
-                st.session_state.df_dados = pd.concat([st.session_state.df_dados, df_novo], ignore_index=True)
-            if salvar_dados(st.session_state.df_dados):
-                # Limpa tudo e volta para o Dashboard
-                st.session_state.ferramentas_selecionadas = []
-                st.session_state.operador_logado = None
-                st.session_state.setor_logado = None
-                st.session_state.tela_atual = 'dashboard'
-                st.rerun()
+        st.markdown("---")
+
+        # --- CONFIRMAÇÃO FINAL ---
+        if st.button("✅ Confirmo a retirada em meu nome", width='stretch', type="primary"):
+            if not st.session_state.ferramentas_selecionadas:
+                st.warning("⚠️ Atenção: Por favor, selecione pelo menos uma ferramenta nas abas.")
             else:
-                st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
+                agora = datetime.now(FUSO_HORARIO_BRASIL)
+                for ferramenta in st.session_state.ferramentas_selecionadas:
+                    categoria, detalhe = ferramenta.split(" - ", 1)
+                    novo_id = agora.strftime('%Y%m%d%H%M%S') + str(len(st.session_state.df_dados))
+
+                    novo_registro = {
+                        'ID': novo_id,
+                        'Instrumento': categoria,
+                        'Especificacao': detalhe,
+                        'Operador': st.session_state.operador_logado,
+                        'Setor': st.session_state.setor_logado,
+                        'Maquina': st.session_state.maquina_selecionada,
+                        'Data_Retirada': agora.strftime("%d/%m/%Y"),
+                        'Hora_Retirada': agora.strftime("%H:%M"),
+                        'Data_Retorno': "",
+                        'Hora_Retorno': "",
+                        'Status': "Em Uso"
+                    }
+
+                    df_novo = pd.DataFrame([novo_registro])
+                    st.session_state.df_dados = pd.concat([st.session_state.df_dados, df_novo], ignore_index=True)
+                if salvar_dados(st.session_state.df_dados):
+                    # Limpa tudo e volta para o Dashboard
+                    st.session_state.ferramentas_selecionadas = []
+                    st.session_state.operador_logado = None
+                    st.session_state.setor_logado = None
+                    st.session_state.maquina_selecionada = None
+                    st.session_state.passo_retirada = 1
+                    st.session_state.tela_atual = 'dashboard'
+                    st.rerun()
+                else:
+                    st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
