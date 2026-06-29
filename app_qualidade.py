@@ -8,7 +8,7 @@ import plotly.express as px
 from dados_comuns import setores_operadores, maquinas_lista, estoque
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
-st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide", page_icon="🔧", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide", page_icon="🏭", initial_sidebar_state="expanded")
 
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
@@ -136,30 +136,28 @@ if st.session_state.tela_atual == 'dashboard':
     # --- TELA 1: DASHBOARD EM TEMPO REAL ---
     st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
 
-    # Botão de ação destacado no topo
-    col_btn, col_stats = st.columns([2, 8])
+    # Botão de ação e estatísticas na mesma linha
+    col_btn, col_stat1, col_stat2 = st.columns([2, 3, 3])
     with col_btn:
         if st.button("➕ Nova Retirada", width='stretch', type="primary"):
             st.session_state.tela_atual = 'retirada'
             st.session_state.operador_logado = None
             st.session_state.setor_logado = None
             st.rerun()
-    with col_stats:
-        # Estatísticas rápidas
+    with col_stat1:
         df = st.session_state.df_dados
         df_uso = df[df['Status'] == 'Em Uso']
-        df_devolvidos = df[df['Status'] == 'Devolvido']
         st.metric("🟢 Em Uso", len(df_uso))
-        st.metric("🔴 Devolvidas Hoje", len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")]))
+    with col_stat2:
+        df_devolvidos = df[df['Status'] == 'Devolvido']
+        st.metric(" Devolvidas Hoje", len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")]))
 
     st.markdown("---")
 
-    # Layout em duas colunas melhorado
-    col_em_uso, col_devolvidos = st.columns(2, gap="large")
-
-    with col_em_uso:
+    # Layout: Ferramentas em Uso em largura total
+    with st.container(border=True):
         st.markdown("""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #003366; padding: 15px; border-radius: 5px; color: white; margin-bottom: 15px;">
                 <h4 style="margin:0; font-size: 18px;">🟢 Ferramentas em Uso (Tempo Real)</h4>
             </div>
         """, unsafe_allow_html=True)
@@ -210,9 +208,11 @@ if st.session_state.tela_atual == 'dashboard':
         else:
             st.info("Nenhuma ferramenta retirada no momento.")
 
-    with col_devolvidos:
+    # --- HISTÓRICO DE DEVOLUÇÕES ---
+    st.markdown("---")
+    with st.container(border=True):
         st.markdown("""
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #000000; padding: 15px; border-radius: 5px; color: white; margin-bottom: 15px;">
                 <h4 style="margin:0; font-size: 18px;">🔴 Histórico de Devoluções</h4>
             </div>
         """, unsafe_allow_html=True)
@@ -235,19 +235,22 @@ if st.session_state.tela_atual == 'dashboard':
         contagem_ferramentas = df_uso['Instrumento'].value_counts().reset_index()
         contagem_ferramentas.columns = ['Instrumento', 'Quantidade']
 
-        fig = px.bar(
+        fig = px.line(
             contagem_ferramentas,
             x='Instrumento',
             y='Quantidade',
             title='Ferramentas Mais Utilizadas',
-            color='Quantidade',
-            color_continuous_scale='Blues'
+            markers=True,
+            line_shape='linear'
         )
         fig.update_layout(
             xaxis_title="Tipo de Ferramenta",
             yaxis_title="Quantidade em Uso",
-            yaxis=dict(tickmode='linear', tick0=0, dtick=1)
+            yaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            plot_bgcolor='white',
+            paper_bgcolor='white'
         )
+        fig.update_traces(line_color='#003366', marker_color='#003366')
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Nenhum dado disponível para o gráfico.")
@@ -272,7 +275,7 @@ elif st.session_state.tela_atual == 'retirada':
     # --- PASSO 1: ESCOLHER SETOR ---
     if st.session_state.passo_retirada == 1:
         st.markdown("""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #003366; padding: 20px; border-radius: 5px; color: white; margin-bottom: 20px;">
                 <h3 style="margin:0;">🏢 Passo 1: Qual é o seu setor?</h3>
             </div>
         """, unsafe_allow_html=True)
@@ -287,7 +290,7 @@ elif st.session_state.tela_atual == 'retirada':
     # --- PASSO 2: ESCOLHER NOME ---
     elif st.session_state.passo_retirada == 2:
         st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #003366; padding: 20px; border-radius: 5px; color: white; margin-bottom: 20px;">
                 <h3 style="margin:0;">👤 Passo 2: Qual é o seu nome?</h3>
                 <p style="margin:5px 0 0 0; opacity: 0.9;">Setor: {st.session_state.setor_logado}</p>
             </div>
@@ -322,7 +325,7 @@ elif st.session_state.tela_atual == 'retirada':
     # --- PASSO 3: ESCOLHER MÁQUINA ---
     elif st.session_state.passo_retirada == 3:
         st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #003366; padding: 20px; border-radius: 5px; color: white; margin-bottom: 20px;">
                 <h3 style="margin:0;">🏭 Passo 3: Onde você vai usar?</h3>
                 <p style="margin:5px 0 0 0; opacity: 0.9;">{st.session_state.operador_logado} - {st.session_state.setor_logado}</p>
             </div>
@@ -347,7 +350,7 @@ elif st.session_state.tela_atual == 'retirada':
     # --- PASSO 4: ESCOLHER FERRAMENTAS ---
     elif st.session_state.passo_retirada == 4:
         st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background-color: #003366; padding: 20px; border-radius: 5px; color: white; margin-bottom: 20px;">
                 <h3 style="margin:0;">🔧 Passo 4: O que você vai retirar?</h3>
                 <p style="margin:5px 0 0 0; opacity: 0.9;">{st.session_state.operador_logado} - {st.session_state.setor_logado} - {st.session_state.maquina_selecionada}</p>
             </div>
