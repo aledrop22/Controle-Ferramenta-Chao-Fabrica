@@ -124,11 +124,11 @@ if modo_acesso == "Chão de Fábrica (Apenas Visão)":
 elif modo_acesso == "Qualidade (Interativo)":
     # --- 2. DADOS DA FÁBRICA (Operadores, Setores e Máquinas) ---
     setores_operadores = {
-        "Usinagem": ["Pedro Henrique", "Alex", "Vitor", "Rodrigo", "Vinícius", "Márcio", "Gabriel", "Lucas", "Jadson"],
-        "Produção": ["Sr. Luis", "Luis", "Daniel", "Felipe", "Jadson"],
-        "Manutenção": ["Nilson", "Marcos", "Renato"],
-        "Estoque": ["Elias", "Lucas", "Victor", "Rafael"],
-        "Expedição": ["Karina", "Deise", "Frank", "Giulia", "Adriano", "Ismael"]
+        "Usinagem": ["Alex", "Leandro", "Pedro Henrique", "Rodrigo", "Vinícius", "Márcio", "Gabriel", "Lucas", "Jadson"],
+    "Produção": ["Sr. Luis", "Luis", "Pablo", "Felipe", "Amadeus"],
+    "Manutenção": ["Nilson", "Marcos", "Renato"],
+    "Estoque": ["Elias", "Lucas", "Victor", "Rafael"],
+    "Expedição": ["Karina", "Deise", "Frank", "Giulia", "Adriano", "Ismael"]
     }
 
     maquinas_lista = [
