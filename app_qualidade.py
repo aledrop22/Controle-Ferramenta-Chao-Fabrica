@@ -10,6 +10,12 @@ from dados_comuns import setores_operadores, maquinas_lista, estoque
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
 st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide", page_icon="🏭", initial_sidebar_state="expanded")
 
+# --- VERIFICAÇÃO DE ACESSO VIA URL ---
+# Se o parâmetro acesso=chao estiver presente, redireciona para o app_chao_fabrica
+query_params = st.query_params
+if 'acesso' in query_params and query_params['acesso'] == 'chao':
+    st.switch_page("app_chao_fabrica.py")
+
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
 <style>
@@ -116,6 +122,8 @@ if 'operador_logado' not in st.session_state:
     st.session_state.operador_logado = None
 if 'setor_logado' not in st.session_state:
     st.session_state.setor_logado = None
+if 'maquina_selecionada' not in st.session_state:
+    st.session_state.maquina_selecionada = None
 if 'ferramentas_selecionadas' not in st.session_state:
     st.session_state.ferramentas_selecionadas = []
 if 'passo_retirada' not in st.session_state:
@@ -147,10 +155,21 @@ if st.session_state.tela_atual == 'dashboard':
     with col_stat1:
         df = st.session_state.df_dados
         df_uso = df[df['Status'] == 'Em Uso']
-        st.metric("🟢 Em Uso", len(df_uso))
+        st.markdown("""
+            <div style="background-color: #003366; padding: 20px; border-radius: 10px; border: 2px solid #003366; color: white; text-align: center;">
+                <h3 style="margin:0; font-size: 32px;">""" + str(len(df_uso)) + """</h3>
+                <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🟢 Em Uso</p>
+            </div>
+        """, unsafe_allow_html=True)
     with col_stat2:
         df_devolvidos = df[df['Status'] == 'Devolvido']
-        st.metric(" Devolvidas Hoje", len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")]))
+        devolvidas_hoje = len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")])
+        st.markdown("""
+            <div style="background-color: #000000; padding: 20px; border-radius: 10px; border: 2px solid #000000; color: white; text-align: center;">
+                <h3 style="margin:0; font-size: 32px;">""" + str(devolvidas_hoje) + """</h3>
+                <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🔴 Devolvidas Hoje</p>
+            </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -176,6 +195,14 @@ if st.session_state.tela_atual == 'dashboard':
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
                         st.markdown(f"**{len(group)} ferramenta(s)**")
+                        st.markdown("""
+                            <style>
+                                div[data-testid="stButton"] > button[kind="secondary"] {
+                                    background-color: #dc3545 !important;
+                                    color: white !important;
+                                }
+                            </style>
+                        """, unsafe_allow_html=True)
                         if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary", use_container_width=True):
                             agora = datetime.now(FUSO_HORARIO_BRASIL)
                             for idx in group.index:
@@ -227,30 +254,32 @@ if st.session_state.tela_atual == 'dashboard':
         else:
             st.info("Nenhuma devolução registrada ainda.")
 
-    # --- GRÁFICO DE FERRAMENTAS MAIS USADAS ---
+    # --- GRÁFICO DE FERRAMENTAS POR OPERADOR ---
     st.markdown("---")
-    st.subheader("📊 Ferramentas Mais Usadas")
+    st.subheader("📊 Resumo por Operador")
     if not df_uso.empty:
-        # Contar uso por tipo de ferramenta
-        contagem_ferramentas = df_uso['Instrumento'].value_counts().reset_index()
-        contagem_ferramentas.columns = ['Instrumento', 'Quantidade']
+        # Contar ferramentas por operador
+        contagem_operadores = df_uso.groupby('Operador').size().reset_index(name='Quantidade')
+        contagem_operadores = contagem_operadores.sort_values('Quantidade', ascending=True)
 
-        fig = px.line(
-            contagem_ferramentas,
-            x='Instrumento',
-            y='Quantidade',
-            title='Ferramentas Mais Utilizadas',
-            markers=True,
-            line_shape='linear'
+        fig = px.bar(
+            contagem_operadores,
+            x='Quantidade',
+            y='Operador',
+            title='Quantidade de Ferramentas por Operador',
+            orientation='h',
+            color='Quantidade',
+            color_continuous_scale='Blues'
         )
         fig.update_layout(
-            xaxis_title="Tipo de Ferramenta",
-            yaxis_title="Quantidade em Uso",
-            yaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            xaxis_title="Quantidade",
+            yaxis_title="Operador",
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
             plot_bgcolor='white',
-            paper_bgcolor='white'
+            paper_bgcolor='white',
+            height=400
         )
-        fig.update_traces(line_color='#003366', marker_color='#003366')
+        fig.update_traces(marker_color='#003366')
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Nenhum dado disponível para o gráfico.")

@@ -7,6 +7,12 @@ import plotly.express as px
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
 st.set_page_config(page_title="Controle de Ferramentas - Chão de Fábrica", layout="wide")
 
+# --- VERIFICAÇÃO DE ACESSO VIA URL ---
+# Verifica se o parâmetro acesso=chao está presente na URL
+query_params = st.query_params
+if 'acesso' in query_params and query_params['acesso'] != 'chao':
+    st.switch_page("app_qualidade.py")
+
 # CSS para responsividade
 st.markdown("""
 <style>
