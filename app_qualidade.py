@@ -145,7 +145,7 @@ if st.session_state.tela_atual == 'dashboard':
     st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
 
     # Botão de ação e estatísticas na mesma linha
-    col_btn, col_stat1, col_stat2 = st.columns([2, 3, 3])
+    col_btn, col_stat1, col_stat2 = st.columns([1, 1, 1])
     with col_btn:
         if st.button("➕ Nova Retirada", width='stretch', type="primary"):
             st.session_state.tela_atual = 'retirada'
@@ -249,6 +249,9 @@ if st.session_state.tela_atual == 'dashboard':
             df_devolvidos = df_devolvidos.copy()
             df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + ' às ' + df_devolvidos['Hora_Retirada']
             df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + ' às ' + df_devolvidos['Hora_Retorno']
+            # Ordenar por data/hora de devolução (mais recentes primeiro)
+            df_devolvidos['Data_Hora_Devolucao_Sort'] = pd.to_datetime(df_devolvidos['Data_Retorno'] + ' ' + df_devolvidos['Hora_Retorno'], format='%d/%m/%Y %H:%M')
+            df_devolvidos = df_devolvidos.sort_values('Data_Hora_Devolucao_Sort', ascending=False)
             df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador', 'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
             st.dataframe(df_display, hide_index=True, use_container_width=True)
         else:
@@ -262,14 +265,12 @@ if st.session_state.tela_atual == 'dashboard':
         contagem_operadores = df_uso.groupby('Operador').size().reset_index(name='Quantidade')
         contagem_operadores = contagem_operadores.sort_values('Quantidade', ascending=True)
 
-        fig = px.bar(
+        fig = px.line(
             contagem_operadores,
             x='Quantidade',
             y='Operador',
             title='Quantidade de Ferramentas por Operador',
-            orientation='h',
-            color='Quantidade',
-            color_continuous_scale='Blues'
+            markers=True
         )
         fig.update_layout(
             xaxis_title="Quantidade",
@@ -279,7 +280,7 @@ if st.session_state.tela_atual == 'dashboard':
             paper_bgcolor='white',
             height=400
         )
-        fig.update_traces(marker_color='#003366')
+        fig.update_traces(line_color='#003366', marker_color='#003366')
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Nenhum dado disponível para o gráfico.")
