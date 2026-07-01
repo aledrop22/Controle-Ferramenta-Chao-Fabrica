@@ -5,6 +5,7 @@ import os
 import pytz
 from filelock import FileLock
 import plotly.express as px
+import time
 from dados_comuns import setores_operadores, maquinas_lista, estoque
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
@@ -142,6 +143,8 @@ if st.session_state.tela_atual == 'dashboard':
     # --- TELA 1: DASHBOARD EM TEMPO REAL ---
     if modo_chao_fabrica:
         st.title("🏭 Ferramentas no Chão de Fábrica")
+        # Recarregar dados automaticamente no modo chão de fábrica
+        st.session_state.df_dados = carregar_dados()
     else:
         st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
 
@@ -552,3 +555,8 @@ elif st.session_state.tela_atual == 'retirada':
                     st.rerun()
                 else:
                     st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
+
+# --- AUTO-REFRESH PARA MODO CHÃO DE FÁBRICA ---
+if modo_chao_fabrica and st.session_state.tela_atual == 'dashboard':
+    time.sleep(5)
+    st.rerun()
