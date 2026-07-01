@@ -618,7 +618,5 @@ elif st.session_state.tela_atual == 'retirada':
                     st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
 
 # --- AUTO-REFRESH PARA MODO CHÃO DE FÁBRICA ---
-if modo_chao_fabrica and st.session_state.tela_atual == 'dashboard':
-    # Auto-refresh apenas no modo chão de fábrica
-    time.sleep(5)
-    st.rerun()
+# REMOVIDO: time.sleep + st.rerun causa loop infinito no Streamlit Cloud
+# Para atualização em tempo real, usar st.automatic_rerun em versões futuras
