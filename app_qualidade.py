@@ -268,55 +268,57 @@ if st.session_state.tela_atual == 'dashboard':
         else:
             st.info("Nenhuma ferramenta retirada no momento.")
 
-    # --- HISTÓRICO DE DEVOLUÇÕES ---
-    st.markdown("---")
-    with st.container(border=True):
-        st.markdown("""
-            <div style="background-color: #000000; padding: 15px; border-radius: 5px; color: white; margin-bottom: 15px;">
-                <h4 style="margin:0; font-size: 18px;">🔴 Histórico de Devoluções</h4>
-            </div>
-        """, unsafe_allow_html=True)
+    # --- HISTÓRICO DE DEVOLUÇÕES (APENAS MODO QUALIDADE) ---
+    if not modo_chao_fabrica:
+        st.markdown("---")
+        with st.container(border=True):
+            st.markdown("""
+                <div style="background-color: #000000; padding: 15px; border-radius: 5px; color: white; margin-bottom: 15px;">
+                    <h4 style="margin:0; font-size: 18px;">🔴 Histórico de Devoluções</h4>
+                </div>
+            """, unsafe_allow_html=True)
 
-        if not df_devolvidos.empty:
-            # Criar colunas combinadas de data/hora
-            df_devolvidos = df_devolvidos.copy()
-            df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + ' às ' + df_devolvidos['Hora_Retirada']
-            df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + ' às ' + df_devolvidos['Hora_Retorno']
-            # Ordenar por data/hora de devolução (mais recentes primeiro)
-            df_devolvidos['Data_Hora_Devolucao_Sort'] = pd.to_datetime(df_devolvidos['Data_Retorno'] + ' ' + df_devolvidos['Hora_Retorno'], format='%d/%m/%Y %H:%M')
-            df_devolvidos = df_devolvidos.sort_values('Data_Hora_Devolucao_Sort', ascending=False)
-            df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador', 'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
-            st.dataframe(df_display, hide_index=True, use_container_width=True)
+            if not df_devolvidos.empty:
+                # Criar colunas combinadas de data/hora
+                df_devolvidos = df_devolvidos.copy()
+                df_devolvidos['Data/Horas - Retirada'] = df_devolvidos['Data_Retirada'] + ' às ' + df_devolvidos['Hora_Retirada']
+                df_devolvidos['Data/Horas - Devolução'] = df_devolvidos['Data_Retorno'] + ' às ' + df_devolvidos['Hora_Retorno']
+                # Ordenar por data/hora de devolução (mais recentes primeiro)
+                df_devolvidos['Data_Hora_Devolucao_Sort'] = pd.to_datetime(df_devolvidos['Data_Retorno'] + ' ' + df_devolvidos['Hora_Retorno'], format='%d/%m/%Y %H:%M')
+                df_devolvidos = df_devolvidos.sort_values('Data_Hora_Devolucao_Sort', ascending=False)
+                df_display = df_devolvidos[['Instrumento', 'Especificacao', 'Operador', 'Maquina', 'Data/Horas - Retirada', 'Data/Horas - Devolução']]
+                st.dataframe(df_display, hide_index=True, use_container_width=True)
+            else:
+                st.info("Nenhuma devolução registrada ainda.")
+
+    # --- GRÁFICO DE FERRAMENTAS POR OPERADOR (APENAS MODO QUALIDADE) ---
+    if not modo_chao_fabrica:
+        st.markdown("---")
+        st.subheader("📊 Resumo por Operador")
+        if not df_uso.empty:
+            # Contar ferramentas por operador
+            contagem_operadores = df_uso.groupby('Operador').size().reset_index(name='Quantidade')
+            contagem_operadores = contagem_operadores.sort_values('Quantidade', ascending=True)
+
+            fig = px.line(
+                contagem_operadores,
+                x='Quantidade',
+                y='Operador',
+                title='Quantidade de Ferramentas por Operador',
+                markers=True
+            )
+            fig.update_layout(
+                xaxis_title="Quantidade",
+                yaxis_title="Operador",
+                xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                height=400
+            )
+            fig.update_traces(line_color='#003366', marker_color='#003366')
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Nenhuma devolução registrada ainda.")
-
-    # --- GRÁFICO DE FERRAMENTAS POR OPERADOR ---
-    st.markdown("---")
-    st.subheader("📊 Resumo por Operador")
-    if not df_uso.empty:
-        # Contar ferramentas por operador
-        contagem_operadores = df_uso.groupby('Operador').size().reset_index(name='Quantidade')
-        contagem_operadores = contagem_operadores.sort_values('Quantidade', ascending=True)
-
-        fig = px.line(
-            contagem_operadores,
-            x='Quantidade',
-            y='Operador',
-            title='Quantidade de Ferramentas por Operador',
-            markers=True
-        )
-        fig.update_layout(
-            xaxis_title="Quantidade",
-            yaxis_title="Operador",
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            height=400
-        )
-        fig.update_traces(line_color='#003366', marker_color='#003366')
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Nenhum dado disponível para o gráfico.")
+            st.info("Nenhum dado disponível para o gráfico.")
 
 elif st.session_state.tela_atual == 'retirada':
     # --- TELA 2: FLUXO DE RETIRADA ---
