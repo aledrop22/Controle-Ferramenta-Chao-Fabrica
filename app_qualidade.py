@@ -131,8 +131,17 @@ if 'passo_retirada' not in st.session_state:
 
 # Geração automática de fotos reais para todos os operadores
 todos_operadores = [nome for lista in setores_operadores.values() for nome in lista]
-# Usa UI Faces para fotos reais de pessoas aleatórias
-fotos_operadores = {nome: f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={i % 70}" for i, nome in enumerate(todos_operadores)}
+
+# Mapeamento de gênero para usar fotos apropriadas
+nomes_femininos = {'Karina', 'Deise', 'Giulia'}
+fotos_operadores = {}
+for i, nome in enumerate(todos_operadores):
+    if nome in nomes_femininos:
+        # Usar fotos femininas (índices 32-49 no pravatar.cc são tipicamente femininos)
+        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={32 + (i % 18)}"
+    else:
+        # Usar fotos masculinas (índices 0-31 no pravatar.cc são tipicamente masculinos)
+        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={i % 32}"
 
 
 # ==========================================
