@@ -98,6 +98,19 @@ def carregar_dados():
         # Se o CSV antigo não tiver a coluna 'Setor', nós adicionamos para não dar erro
         if 'Setor' not in df.columns:
             df.insert(4, 'Setor', 'Não Informado')
+        # Limpar automaticamente ferramentas "Em Uso" com mais de 1 dia
+        hoje = datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")
+        mask_em_uso_antigo = (df['Status'] == 'Em Uso') & (df['Data_Retirada'] != hoje)
+        if mask_em_uso_antigo.any():
+            df.loc[mask_em_uso_antigo, 'Data_Retorno'] = hoje
+            df.loc[mask_em_uso_antigo, 'Hora_Retorno'] = datetime.now(FUSO_HORARIO_BRASIL).strftime("%H:%M")
+            df.loc[mask_em_uso_antigo, 'Status'] = 'Devolvido'
+            # Salvar automaticamente a correção
+            try:
+                with FileLock(ARQUIVO_LOCK, timeout=10):
+                    df.to_csv(ARQUIVO_CSV, index=False, sep=';', encoding='utf-8-sig')
+            except:
+                pass  # Se falhar, continua com os dados em memória
         return df
     else:
         return pd.DataFrame(columns=['ID', 'Instrumento', 'Especificacao', 'Operador', 'Setor', 'Maquina', 'Data_Retirada', 'Hora_Retirada', 'Data_Retorno', 'Hora_Retorno', 'Status'])
@@ -135,13 +148,17 @@ todos_operadores = [nome for lista in setores_operadores.values() for nome in li
 # Mapeamento de gênero para usar fotos apropriadas
 nomes_femininos = {'Karina', 'Deise', 'Giulia'}
 fotos_operadores = {}
-for i, nome in enumerate(todos_operadores):
+contador_masculino = 0
+contador_feminino = 0
+for nome in todos_operadores:
     if nome in nomes_femininos:
         # Usar fotos femininas (índices 32-49 no pravatar.cc são tipicamente femininos)
-        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={32 + (i % 18)}"
+        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={32 + (contador_feminino % 18)}"
+        contador_feminino += 1
     else:
         # Usar fotos masculinas (índices 0-31 no pravatar.cc são tipicamente masculinos)
-        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={i % 32}"
+        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={contador_masculino % 32}"
+        contador_masculino += 1
 
 
 # ==========================================
@@ -598,5 +615,6 @@ elif st.session_state.tela_atual == 'retirada':
 
 # --- AUTO-REFRESH PARA MODO CHÃO DE FÁBRICA ---
 if modo_chao_fabrica and st.session_state.tela_atual == 'dashboard':
+    # Auto-refresh apenas no modo chão de fábrica
     time.sleep(5)
     st.rerun()
