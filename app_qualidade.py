@@ -157,8 +157,12 @@ for nome in todos_operadores:
         contador_feminino += 1
     else:
         # Usar fotos masculinas (índices 0-31 no pravatar.cc são tipicamente masculinos)
-        fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={contador_masculino % 32}"
-        contador_masculino += 1
+        # Forçar foto masculina específica para Márcio
+        if nome == 'Márcio':
+            fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img=11"
+        else:
+            fotos_operadores[nome] = f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&img={contador_masculino % 32}"
+            contador_masculino += 1
 
 
 # ==========================================
