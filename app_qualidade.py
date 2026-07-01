@@ -360,7 +360,7 @@ elif st.session_state.tela_atual == 'retirada':
                 if i + j < len(setores_lista):
                     setor = setores_lista[i + j]
                     with cols[j]:
-                        if st.button(f"🏢 {setor}", key=f"btn_setor_{setor}", width='stretch', type="primary"):
+                        if st.button(f"🏢 {setor}", key=f"btn_setor_{setor}", width='stretch'):
                             st.session_state.setor_logado = setor
                             st.session_state.passo_retirada = 2
                             st.rerun()
@@ -428,7 +428,7 @@ elif st.session_state.tela_atual == 'retirada':
                 if i + j < len(maquinas_filtradas):
                     maquina = maquinas_filtradas[i + j]
                     with cols[j]:
-                        if st.button(f"🏭 {maquina}", key=f"btn_maquina_{maquina}", width='stretch', type="primary"):
+                        if st.button(f"🏭 {maquina}", key=f"btn_maquina_{maquina}", width='stretch'):
                             st.session_state.maquina_selecionada = maquina
                             st.session_state.passo_retirada = 4
                             st.rerun()
