@@ -180,10 +180,12 @@ if st.session_state.tela_atual == 'dashboard':
 
     # Botão de ação e estatísticas na mesma linha
     if modo_chao_fabrica:
-        # No modo chão de fábrica, não mostra botão de nova retirada, mas mantém mesmo tamanho
-        col_vazio, col_stat1, col_stat2 = st.columns([1, 1, 1])
-        with col_vazio:
-            st.empty()
+        # No modo chão de fábrica, mostra botão de atualização
+        col_btn, col_stat1, col_stat2 = st.columns([1, 1, 1])
+        with col_btn:
+            if st.button("🔄 Atualizar", width='stretch'):
+                st.session_state.df_dados = carregar_dados()
+                st.rerun()
         with col_stat1:
             df = st.session_state.df_dados
             df_uso = df[df['Status'] == 'Em Uso']
