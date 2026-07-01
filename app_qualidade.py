@@ -8,13 +8,11 @@ import plotly.express as px
 from dados_comuns import setores_operadores, maquinas_lista, estoque
 
 # --- CONFIGURAÇÃO INICIAL DA PÁGINA ---
-st.set_page_config(page_title="Controle de Ferramentas - Qualidade", layout="wide", page_icon="🏭", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Controle de Ferramentas", layout="wide", page_icon="🏭", initial_sidebar_state="expanded")
 
-# --- VERIFICAÇÃO DE ACESSO VIA URL ---
-# Se o parâmetro acesso=chao estiver presente, redireciona para o app_chao_fabrica
+# --- VERIFICAÇÃO DE MODO DE ACESSO ---
 query_params = st.query_params
-if 'acesso' in query_params and query_params['acesso'] == 'chao':
-    st.switch_page("app_chao_fabrica.py")
+modo_chao_fabrica = 'acesso' in query_params and query_params['acesso'] == 'chao'
 
 # CSS para responsividade e tamanho de imagens
 st.markdown("""
@@ -142,34 +140,60 @@ fotos_operadores = {nome: f"https://i.pravatar.cc/150?u={nome.replace(' ', '')}&
 
 if st.session_state.tela_atual == 'dashboard':
     # --- TELA 1: DASHBOARD EM TEMPO REAL ---
-    st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
+    if modo_chao_fabrica:
+        st.title("🏭 Ferramentas no Chão de Fábrica")
+    else:
+        st.title("📊 Painel de Ferramentas - Qualidade (Interativo)")
 
     # Botão de ação e estatísticas na mesma linha
-    col_btn, col_stat1, col_stat2 = st.columns([1, 1, 1])
-    with col_btn:
-        if st.button("➕ Nova Retirada", width='stretch', type="primary"):
-            st.session_state.tela_atual = 'retirada'
-            st.session_state.operador_logado = None
-            st.session_state.setor_logado = None
-            st.rerun()
-    with col_stat1:
-        df = st.session_state.df_dados
-        df_uso = df[df['Status'] == 'Em Uso']
-        st.markdown("""
-            <div style="background-color: #003366; padding: 20px; border-radius: 10px; border: 2px solid #003366; color: white; text-align: center;">
-                <h3 style="margin:0; font-size: 32px;">""" + str(len(df_uso)) + """</h3>
-                <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🟢 Em Uso</p>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_stat2:
-        df_devolvidos = df[df['Status'] == 'Devolvido']
-        devolvidas_hoje = len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")])
-        st.markdown("""
-            <div style="background-color: #000000; padding: 20px; border-radius: 10px; border: 2px solid #000000; color: white; text-align: center;">
-                <h3 style="margin:0; font-size: 32px;">""" + str(devolvidas_hoje) + """</h3>
-                <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🔴 Devolvidas Hoje</p>
-            </div>
-        """, unsafe_allow_html=True)
+    if modo_chao_fabrica:
+        # No modo chão de fábrica, não mostra botão de nova retirada
+        col_stat1, col_stat2 = st.columns([1, 1])
+        with col_stat1:
+            df = st.session_state.df_dados
+            df_uso = df[df['Status'] == 'Em Uso']
+            st.markdown("""
+                <div style="background-color: #003366; padding: 20px; border-radius: 10px; border: 2px solid #003366; color: white; text-align: center;">
+                    <h3 style="margin:0; font-size: 32px;">""" + str(len(df_uso)) + """</h3>
+                    <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🟢 Em Uso</p>
+                </div>
+            """, unsafe_allow_html=True)
+        with col_stat2:
+            df_devolvidos = df[df['Status'] == 'Devolvido']
+            devolvidas_hoje = len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")])
+            st.markdown("""
+                <div style="background-color: #000000; padding: 20px; border-radius: 10px; border: 2px solid #000000; color: white; text-align: center;">
+                    <h3 style="margin:0; font-size: 32px;">""" + str(devolvidas_hoje) + """</h3>
+                    <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🔴 Devolvidas Hoje</p>
+                </div>
+            """, unsafe_allow_html=True)
+    else:
+        # Modo qualidade - mostra botão de nova retirada
+        col_btn, col_stat1, col_stat2 = st.columns([1, 1, 1])
+        with col_btn:
+            if st.button("➕ Nova Retirada", width='stretch', type="primary"):
+                st.session_state.tela_atual = 'retirada'
+                st.session_state.operador_logado = None
+                st.session_state.setor_logado = None
+                st.rerun()
+        with col_stat1:
+            df = st.session_state.df_dados
+            df_uso = df[df['Status'] == 'Em Uso']
+            st.markdown("""
+                <div style="background-color: #003366; padding: 20px; border-radius: 10px; border: 2px solid #003366; color: white; text-align: center;">
+                    <h3 style="margin:0; font-size: 32px;">""" + str(len(df_uso)) + """</h3>
+                    <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🟢 Em Uso</p>
+                </div>
+            """, unsafe_allow_html=True)
+        with col_stat2:
+            df_devolvidos = df[df['Status'] == 'Devolvido']
+            devolvidas_hoje = len(df_devolvidos[df_devolvidos['Data_Retorno'] == datetime.now(FUSO_HORARIO_BRASIL).strftime("%d/%m/%Y")])
+            st.markdown("""
+                <div style="background-color: #000000; padding: 20px; border-radius: 10px; border: 2px solid #000000; color: white; text-align: center;">
+                    <h3 style="margin:0; font-size: 32px;">""" + str(devolvidas_hoje) + """</h3>
+                    <p style="margin:5px 0 0 0; font-size: 16px; opacity: 0.9;">🔴 Devolvidas Hoje</p>
+                </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -195,43 +219,52 @@ if st.session_state.tela_atual == 'dashboard':
                     with c2:
                         st.markdown(f"👤 **{operador}** ({setor}) | 🏭 **{maquina}")
                         st.markdown(f"**{len(group)} ferramenta(s)**")
-                        st.markdown("""
-                            <style>
-                                div[data-testid="stButton"] > button[kind="secondary"] {
-                                    background-color: #dc3545 !important;
-                                    color: white !important;
-                                }
-                            </style>
-                        """, unsafe_allow_html=True)
-                        if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary", use_container_width=True):
-                            agora = datetime.now(FUSO_HORARIO_BRASIL)
-                            for idx in group.index:
-                                st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
-                            if salvar_dados(st.session_state.df_dados):
-                                st.rerun()
-                            else:
-                                st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
+                        if not modo_chao_fabrica:
+                            st.markdown("""
+                                <style>
+                                    div[data-testid="stButton"] > button[kind="secondary"] {
+                                        background-color: #dc3545 !important;
+                                        color: white !important;
+                                    }
+                                </style>
+                            """, unsafe_allow_html=True)
+                            if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary", use_container_width=True):
+                                agora = datetime.now(FUSO_HORARIO_BRASIL)
+                                for idx in group.index:
+                                    st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                    st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                    st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                if salvar_dados(st.session_state.df_dados):
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
                         st.markdown("---")
                         for num, (idx, row) in enumerate(group.iterrows(), 1):
                             with st.container(border=True):
-                                col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
-                                with col_num:
-                                    st.markdown(f"**{num}**")
-                                with col_tool:
-                                    st.markdown(f"**{row['Instrumento']}** ({row['Especificacao']})")
-                                    st.markdown(f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
-                                with col_btn:
-                                    if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
-                                        agora = datetime.now(FUSO_HORARIO_BRASIL)
-                                        st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                        st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                        st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
-                                        if salvar_dados(st.session_state.df_dados):
-                                            st.rerun()
-                                        else:
-                                            st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
+                                if modo_chao_fabrica:
+                                    col_num, col_tool = st.columns([0.3, 5])
+                                    with col_num:
+                                        st.markdown(f"**{num}**")
+                                    with col_tool:
+                                        st.markdown(f"**{row['Instrumento']}** ({row['Especificacao']})")
+                                        st.markdown(f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
+                                else:
+                                    col_num, col_tool, col_btn = st.columns([0.3, 5, 1])
+                                    with col_num:
+                                        st.markdown(f"**{num}**")
+                                    with col_tool:
+                                        st.markdown(f"**{row['Instrumento']}** ({row['Especificacao']})")
+                                        st.markdown(f"📅 {row['Data_Retirada']} às {row['Hora_Retirada']}", help="Data de retirada")
+                                    with col_btn:
+                                        if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
+                                            agora = datetime.now(FUSO_HORARIO_BRASIL)
+                                            st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                            st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                            st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                            if salvar_dados(st.session_state.df_dados):
+                                                st.rerun()
+                                            else:
+                                                st.error("❌ Não foi possível salvar a devolução. Tente novamente.")
         else:
             st.info("Nenhuma ferramenta retirada no momento.")
 
