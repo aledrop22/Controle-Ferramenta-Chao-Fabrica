@@ -348,12 +348,22 @@ elif st.session_state.tela_atual == 'retirada':
             </div>
         """, unsafe_allow_html=True)
 
-        setor_escolhido = st.selectbox("Selecione seu Setor:", ["Selecione..."] + list(setores_operadores.keys()), label_visibility="collapsed")
+        st.markdown("---")
+        st.write(f"Selecione seu setor:")
 
-        if setor_escolhido != "Selecione...":
-            st.session_state.setor_logado = setor_escolhido
-            st.session_state.passo_retirada = 2
-            st.rerun()
+        # Mostra os setores em 3 colunas
+        colunas_por_linha = 3
+        setores_lista = list(setores_operadores.keys())
+        for i in range(0, len(setores_lista), colunas_por_linha):
+            cols = st.columns(colunas_por_linha)
+            for j in range(colunas_por_linha):
+                if i + j < len(setores_lista):
+                    setor = setores_lista[i + j]
+                    with cols[j]:
+                        if st.button(f"🏢 {setor}", key=f"btn_setor_{setor}", width='stretch', type="primary"):
+                            st.session_state.setor_logado = setor
+                            st.session_state.passo_retirada = 2
+                            st.rerun()
 
     # --- PASSO 2: ESCOLHER NOME ---
     elif st.session_state.passo_retirada == 2:
@@ -407,13 +417,21 @@ elif st.session_state.tela_atual == 'retirada':
                 st.rerun()
 
         st.markdown("---")
+        st.write(f"Selecione a máquina ou local de uso:")
 
-        maquina_selecionada = st.selectbox("Selecione a Máquina ou Local de Uso:", maquinas_lista)
-
-        if maquina_selecionada != "Selecione...":
-            st.session_state.maquina_selecionada = maquina_selecionada
-            st.session_state.passo_retirada = 4
-            st.rerun()
+        # Mostra as máquinas em 3 colunas
+        colunas_por_linha = 3
+        maquinas_filtradas = [m for m in maquinas_lista if m != "Selecione..."]
+        for i in range(0, len(maquinas_filtradas), colunas_por_linha):
+            cols = st.columns(colunas_por_linha)
+            for j in range(colunas_por_linha):
+                if i + j < len(maquinas_filtradas):
+                    maquina = maquinas_filtradas[i + j]
+                    with cols[j]:
+                        if st.button(f"🏭 {maquina}", key=f"btn_maquina_{maquina}", width='stretch', type="primary"):
+                            st.session_state.maquina_selecionada = maquina
+                            st.session_state.passo_retirada = 4
+                            st.rerun()
 
     # --- PASSO 4: ESCOLHER FERRAMENTAS ---
     elif st.session_state.passo_retirada == 4:
