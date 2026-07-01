@@ -233,10 +233,16 @@ if st.session_state.tela_atual == 'dashboard':
                             """, unsafe_allow_html=True)
                             if st.button("🔄 Devolver Tudo", key=f"dev_all_{operador}_{maquina}", type="secondary", use_container_width=True):
                                 agora = datetime.now(FUSO_HORARIO_BRASIL)
+                                # Recarregar dados para garantir sincronização
+                                st.session_state.df_dados = carregar_dados()
                                 for idx in group.index:
-                                    st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                    st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                    st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                    # Usar ID para garantir atualização correta
+                                    id_ferramenta = group.loc[idx, 'ID']
+                                    mask = st.session_state.df_dados['ID'] == id_ferramenta
+                                    if mask.any():
+                                        st.session_state.df_dados.loc[mask, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                        st.session_state.df_dados.loc[mask, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                        st.session_state.df_dados.loc[mask, 'Status'] = 'Devolvido'
                                 if salvar_dados(st.session_state.df_dados):
                                     st.rerun()
                                 else:
@@ -261,9 +267,14 @@ if st.session_state.tela_atual == 'dashboard':
                                     with col_btn:
                                         if st.button("Devolver", key=f"dev_{row['ID']}", width='stretch'):
                                             agora = datetime.now(FUSO_HORARIO_BRASIL)
-                                            st.session_state.df_dados.loc[idx, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
-                                            st.session_state.df_dados.loc[idx, 'Hora_Retorno'] = agora.strftime("%H:%M")
-                                            st.session_state.df_dados.loc[idx, 'Status'] = 'Devolvido'
+                                            # Recarregar dados para garantir sincronização
+                                            st.session_state.df_dados = carregar_dados()
+                                            # Usar ID para garantir atualização correta
+                                            mask = st.session_state.df_dados['ID'] == row['ID']
+                                            if mask.any():
+                                                st.session_state.df_dados.loc[mask, 'Data_Retorno'] = agora.strftime("%d/%m/%Y")
+                                                st.session_state.df_dados.loc[mask, 'Hora_Retorno'] = agora.strftime("%H:%M")
+                                                st.session_state.df_dados.loc[mask, 'Status'] = 'Devolvido'
                                             if salvar_dados(st.session_state.df_dados):
                                                 st.rerun()
                                             else:
