@@ -369,13 +369,12 @@ if st.session_state.tela_atual == 'dashboard':
             fig.update_layout(
                 xaxis_title="Quantidade",
                 yaxis_title="Operador",
-                xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+                xaxis=dict(tickmode='linear', tick0=0, dtick=1, gridcolor='rgba(255,255,255,0.2)', tickcolor='white'),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.2)', tickcolor='white'),
                 plot_bgcolor='rgba(240,240,240,0.1)',
                 paper_bgcolor='rgba(240,240,240,0.1)',
                 height=400,
-                font=dict(color='white'),
-                xaxis=dict(gridcolor='rgba(255,255,255,0.2)', tickcolor='white'),
-                yaxis=dict(gridcolor='rgba(255,255,255,0.2)', tickcolor='white')
+                font=dict(color='white')
             )
             fig.update_traces(line_color='#00BFFF', marker_color='#00BFFF', line_width=3, marker_size=8)
             st.plotly_chart(fig, use_container_width=True)
