@@ -140,6 +140,8 @@ if 'ferramentas_selecionadas' not in st.session_state:
     st.session_state.ferramentas_selecionadas = []
 if 'passo_retirada' not in st.session_state:
     st.session_state.passo_retirada = 1
+if 'scroll_to_top' not in st.session_state:
+    st.session_state.scroll_to_top = False
 
 
 # Geração automática de fotos reais para todos os operadores
@@ -171,6 +173,15 @@ for nome in todos_operadores:
 
 if st.session_state.tela_atual == 'dashboard':
     # --- TELA 1: DASHBOARD EM TEMPO REAL ---
+    
+    # Scroll automático ao topo se necessário
+    if st.session_state.scroll_to_top:
+        st.markdown("""
+            <script>
+                window.scrollTo(0, 0);
+            </script>
+        """, unsafe_allow_html=True)
+        st.session_state.scroll_to_top = False
     if modo_chao_fabrica:
         st.title("🏭 Ferramentas no Chão de Fábrica")
         # Recarregar dados automaticamente no modo chão de fábrica
@@ -359,11 +370,14 @@ if st.session_state.tela_atual == 'dashboard':
                 xaxis_title="Quantidade",
                 yaxis_title="Operador",
                 xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                height=400
+                plot_bgcolor='rgba(240,240,240,0.1)',
+                paper_bgcolor='rgba(240,240,240,0.1)',
+                height=400,
+                font=dict(color='white'),
+                xaxis=dict(gridcolor='rgba(255,255,255,0.2)', tickcolor='white'),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.2)', tickcolor='white')
             )
-            fig.update_traces(line_color='#003366', marker_color='#003366')
+            fig.update_traces(line_color='#00BFFF', marker_color='#00BFFF', line_width=3, marker_size=8)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Nenhum dado disponível para o gráfico.")
@@ -612,6 +626,7 @@ elif st.session_state.tela_atual == 'retirada':
                     st.session_state.maquina_selecionada = None
                     st.session_state.passo_retirada = 1
                     st.session_state.tela_atual = 'dashboard'
+                    st.session_state.scroll_to_top = True
                     st.rerun()
                 else:
                     st.error("❌ Não foi possível salvar a retirada. Tente novamente.")
