@@ -140,8 +140,6 @@ if 'ferramentas_selecionadas' not in st.session_state:
     st.session_state.ferramentas_selecionadas = []
 if 'passo_retirada' not in st.session_state:
     st.session_state.passo_retirada = 1
-if 'aba_ativa' not in st.session_state:
-    st.session_state.aba_ativa = 0
 
 
 # Geração automática de fotos reais para todos os operadores
@@ -507,11 +505,7 @@ elif st.session_state.tela_atual == 'retirada':
                 st.markdown(f"- {ferramenta}")
         
         # Adicionada a aba "Outras Ferramentas" no final
-        opcoes_abas = ["Porca Calibradora", "Micrômetros", "Súbitos", "Relógio Comparador", "Paquímetro Digital", "Outras Ferramentas ➕"]
-        aba_selecionada = st.selectbox("Selecione a categoria:", opcoes_abas, index=st.session_state.aba_ativa, key="seletor_abas")
-        
-        # Atualiza o índice da aba ativa
-        st.session_state.aba_ativa = opcoes_abas.index(aba_selecionada)
+        tabs = st.tabs(["Porca Calibradora", "Micrômetros", "Súbitos", "Relógio Comparador", "Paquímetro Digital", "Outras Ferramentas ➕"])
 
         def item_disponivel(instrumento, especificacao):
             df = st.session_state.df_dados
@@ -521,53 +515,49 @@ elif st.session_state.tela_atual == 'retirada':
         def item_ja_selecionado(categoria, espec):
             return f"{categoria} - {espec}" in st.session_state.ferramentas_selecionadas
 
-        def render_cards(categoria):
-            st.markdown(f"##### {categoria}")
-            itens = estoque[categoria]
-            colunas_por_linha = 6
-            
-            for i in range(0, len(itens), colunas_por_linha):
-                cols = st.columns(colunas_por_linha)
-                for j in range(colunas_por_linha):
-                    if i + j < len(itens):
-                        espec = itens[i + j]
-                        with cols[j]:
-                            st.container(border=True)
-                            texto_img = espec.replace(' ', '')
-                            st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=70)
-                            st.markdown(f"**{espec}**")
-                            
-                            if item_disponivel(categoria, espec):
-                                if item_ja_selecionado(categoria, espec):
-                                    col_sel, col_desm = st.columns(2)
-                                    with col_sel:
-                                        st.success("Selecionado")
-                                    with col_desm:
-                                        if st.button("Desmarcar", key=f"btn_desm_{categoria}_{espec}", width='stretch'):
+        def render_cards(categoria, idx_tab):
+            with tabs[idx_tab]:
+                st.markdown(f"##### {categoria}")
+                itens = estoque[categoria]
+                colunas_por_linha = 6
+                
+                for i in range(0, len(itens), colunas_por_linha):
+                    cols = st.columns(colunas_por_linha)
+                    for j in range(colunas_por_linha):
+                        if i + j < len(itens):
+                            espec = itens[i + j]
+                            with cols[j]:
+                                st.container(border=True)
+                                texto_img = espec.replace(' ', '')
+                                st.image(f"https://placehold.co/150x150/EEEEEE/31343C?text={texto_img}", width=70)
+                                st.markdown(f"**{espec}**")
+                                
+                                if item_disponivel(categoria, espec):
+                                    if item_ja_selecionado(categoria, espec):
+                                        col_sel, col_desm = st.columns(2)
+                                        with col_sel:
+                                            st.success("Selecionado")
+                                        with col_desm:
+                                            if st.button("Desmarcar", key=f"btn_desm_{categoria}_{espec}", width='stretch'):
+                                                ferramenta_key = f"{categoria} - {espec}"
+                                                st.session_state.ferramentas_selecionadas.remove(ferramenta_key)
+                                    else:
+                                        if st.button("Selecionar", key=f"btn_sel_{categoria}_{espec}", width='stretch'):
                                             ferramenta_key = f"{categoria} - {espec}"
-                                            st.session_state.ferramentas_selecionadas.remove(ferramenta_key)
-                                            st.rerun()
+                                            st.session_state.ferramentas_selecionadas.append(ferramenta_key)
+                                            st.success(f"Adicionado: {espec}")
                                 else:
-                                    if st.button("Selecionar", key=f"btn_sel_{categoria}_{espec}", width='stretch'):
-                                        ferramenta_key = f"{categoria} - {espec}"
-                                        st.session_state.ferramentas_selecionadas.append(ferramenta_key)
-                                        st.success(f"Adicionado: {espec}")
-                                        st.rerun()
-                            else:
-                                st.error("Em uso")
+                                    st.error("Em uso")
 
-        # Renderiza a categoria selecionada
-        if aba_selecionada == "Porca Calibradora":
-            render_cards('Porca Calibradora')
-        elif aba_selecionada == "Micrômetros":
-            render_cards('Micrômetro')
-        elif aba_selecionada == "Súbitos":
-            render_cards('Súbito')
-        elif aba_selecionada == "Relógio Comparador":
-            render_cards('Relógio Comparador')
-        elif aba_selecionada == "Paquímetro Digital":
-            render_cards('Paquímetro Digital')
-        elif aba_selecionada == "Outras Ferramentas ➕":
+        # Renderiza as abas padrão
+        render_cards('Porca Calibradora', 0)
+        render_cards('Micrômetro', 1)
+        render_cards('Súbito', 2)
+        render_cards('Relógio Comparador', 3)
+        render_cards('Paquímetro Digital', 4)
+
+        # Aba "Outras Ferramentas" (Campo de Texto)
+        with tabs[5]:
             st.markdown("##### 🛠️ Outras Ferramentas (Diversas)")
             st.info("Use este espaço para retirar alicates, martelos, chaves, etc.")
             
@@ -583,7 +573,6 @@ elif st.session_state.tela_atual == 'retirada':
                         if ferramenta_key not in st.session_state.ferramentas_selecionadas:
                             st.session_state.ferramentas_selecionadas.append(ferramenta_key)
                             st.success(f"Adicionado: {outra_ferramenta}")
-                            st.rerun()
                         else:
                             st.warning("Esta ferramenta já foi selecionada.")
 
